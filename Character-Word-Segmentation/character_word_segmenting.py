@@ -36,6 +36,8 @@ boxes = pytesseract.image_to_boxes(otsu, lang="heb")
 
 # For each box
 for b in boxes.splitlines():
+    # Splits the values of the box into an array
+    b = b.split(' ')
     # Save the coordinates of the box:
         # x = Distance between the top left corner of the box to the left frame
         # y = Distance between the top of the box to the bottom frame
