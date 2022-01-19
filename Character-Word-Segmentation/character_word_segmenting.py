@@ -49,7 +49,24 @@ for b in boxes.splitlines():
     # Structure image[rows, col]
     crop = otsu[(hImg-h):(hImg-y), x:w]
 
-    # Saves the cropped images into the spesified folder written above.
-    # Each image ID is incremented
-    print(("Saving image number:" + str(id)), cv2.imwrite(str(id) + '.png', crop))
-    id += 1
+    # Height and width of the cropped image
+    hBox, wBox = crop.shape
+
+    # if the image is larger than 15x10
+    if hBox > 15 and wBox > 10:
+        # Saves the cropped images into the spesified folder written above.
+        print(("Saving image number:" + str(id)), cv2.imwrite(str(id) + '.png', crop))
+
+        # Creates a blue rectangle over the letter/image
+        cv2.rectangle(img, (x, hImg - y), (w, hImg - h), (255, 0, 0), 1)
+
+        # Each image ID is incremented
+        id += 1
+    else:
+        print("Image to small.")
+
+        # Creates a red rectangle over it
+        cv2.rectangle(img, (x, hImg - y), (w, hImg - h), (0, 0, 255), 1)
+
+# Saves the image with all of the rectangles
+print("Saving the img was successful:", cv2.imwrite('img.png', img))
