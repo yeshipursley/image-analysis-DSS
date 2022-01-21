@@ -1,3 +1,5 @@
+import torch
+import torch.nn.functional as F
 from torch import nn
 
 class HebrewNet(nn.Module):
@@ -5,14 +7,41 @@ class HebrewNet(nn.Module):
         super(HebrewNet, self).__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(50*50, 512),
-            nn.ReLU(),
-            nn.Linear(512, 512),
-            nn.ReLU(),
-            nn.Linear(512, 10),
+            nn.Linear(50*50, 256),
+            nn.Sigmoid(),
+            #nn.Linear(512, 512),
+            #nn.ReLU(),
+            nn.Dropout(0.25),
+            nn.Linear(256, 4),
+            
         )
 
     def forward(self, x):
         x = self.flatten(x)
         logits = self.linear_relu_stack(x)
         return logits
+
+# https://towardsdatascience.com/implementing-yann-lecuns-lenet-5-in-pytorch-5e05a0911320
+# https://pytorch.org/tutorials/beginner/blitz/neural_networks_tutorial.html#sphx-glr-beginner-blitz-neural-networks-tutorial-py
+class ConvolutionalNet(nn.Module):
+    def __init__(self):
+        super(ConvolutionalNet, self).__init__()
+        # 1 input image channel, 6 output channels, 5x5 square convolution
+        # kernel
+        self.conv1 = nn.Conv2d(1, 6, 5)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        # an affine operation: y = Wx + b
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)  # 5*5 from image dimension
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 4)
+
+    def forward(self, x):
+        # Max pooling over a (2, 2) window
+        x = F.max_pool2d(F.relu(self.conv1(x)), 2)
+        # If the size is a square, you can specify with a single number
+        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
+        x = torch.flatten(x, 1) # flatten all dimensions except the batch dimension
+        x = F.sigmoid(self.fc1(x))
+        x = F.sigmoid(self.fc2(x))
+        x = self.fc3(x)
+        return x

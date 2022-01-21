@@ -23,20 +23,3 @@ class HebrewDataset(Dataset):
             label = self.target_transform(label)
         return image, label
 
-# Create a CSV file with all the resized images
-# path = 'datasets/images/'
-# num_files = len(os.listdir(path))
-
-
-# dataset = list()
-# for i, file in enumerate(os.listdir(path)):
-#     label = re.sub(r'\d+', '', file)[:-4] # Strip the name from the filepath
-#     image = Image.open(path+file).convert('L') # Open the image
-#     dataset.append([file, label])
-   
-# # Write to csv
-# f = open('datasets/dataset.csv', 'w')
-# writer = csv.writer(f)
-# writer.writerows(dataset)
-# f.close()
-    

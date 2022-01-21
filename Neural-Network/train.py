@@ -3,11 +3,14 @@ from torch import nn
 from torch import optim
 from torch.utils.data import DataLoader
 
+import numpy as np
+
 import torchvision
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
 from dataset import HebrewDataset
+from model import ConvolutionalNet
 from model import HebrewNet
 
 # # Load dataset
@@ -40,12 +43,16 @@ from model import HebrewNet
 
 # Hyperparameters
 learning_rate = 0.001
-batch_size = 10
-
+batch_size = 32
 num_epochs = 10
 
-training_set = HebrewDataset('datasets/dataset.csv', 'datasets/images', transform=transforms.ToTensor())
-train_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True)
+# Load datasets
+train_set = HebrewDataset('datasets/train.csv', 'datasets/train', transform=transforms.ToTensor())
+test_set = HebrewDataset('datasets/test.csv', 'datasets/test', transform=transforms.ToTensor())
+
+# Create data loaders
+test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
+train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 
 # Create model
 model = HebrewNet()
@@ -60,7 +67,6 @@ def train_loop(dataloader, model, loss_function, optimizer):
     for batch, (image, label) in enumerate(dataloader):
         # Compute prediction and loss
         prediction = model(image)
-        print(label)
         loss = loss_function(prediction, label)
 
         # Backpropagation
@@ -90,7 +96,7 @@ def test_loop(dataloader, model, loss_fn):
 for epoch in range(num_epochs):
     print(f'Epoch {epoch + 1}/{num_epochs}\n---------------------')
     train_loop(train_loader, model, loss, optimizer)
-    # test_loop(test_loader, model, loss)
+    test_loop(test_loader, model, loss)
 
 torch.save(model.state_dict(), 'number.model')
 print('Model saved')
