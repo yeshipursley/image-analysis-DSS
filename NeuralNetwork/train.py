@@ -3,43 +3,10 @@ from torch import nn
 from torch import optim
 from torch.utils.data import DataLoader
 
-import numpy as np
-
-import torchvision
 import torchvision.transforms as transforms
-import torchvision.datasets as datasets
 
-from dataset import HebrewDataset
-from model import ConvolutionalNet
-from model import HebrewNet
-
-# # Load dataset
-# mnist_train = datasets.MNIST(
-#     root="./datasets", 
-#     train=True, 
-#     transform=transforms.ToTensor(), 
-#     download=True
-# )
-
-# mnist_test = datasets.MNIST(
-#     root="./datasets", 
-#     train=False, 
-#     transform=transforms.ToTensor(), 
-#     download=True
-# )
-
-# # DataLoaders
-# train_loader = torch.utils.data.DataLoader(
-#     mnist_train, 
-#     batch_size=64, 
-#     shuffle = True
-# )
-
-# test_loader = torch.utils.data.DataLoader(
-#     mnist_test, 
-#     batch_size=64, 
-#     shuffle = True
-# )
+from datasets.dataset import HebrewDataset
+from models.model import ConvolutionalNet
 
 # Hyperparameters
 learning_rate = 0.001
@@ -47,15 +14,15 @@ batch_size = 32
 num_epochs = 10
 
 # Load datasets
-train_set = HebrewDataset('datasets/train.csv', 'datasets/train', transform=transforms.ToTensor())
-test_set = HebrewDataset('datasets/test.csv', 'datasets/test', transform=transforms.ToTensor())
+train_set = HebrewDataset('datasets/csv/train.csv', 'datasets/train', transform=transforms.ToTensor())
+test_set = HebrewDataset('datasets/csv/test.csv', 'datasets/test', transform=transforms.ToTensor())
 
 # Create data loaders
 test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
 train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 
 # Create model
-model = HebrewNet()
+model = ConvolutionalNet()
 model.train()
 
 # Optimizer & Loss
@@ -98,7 +65,7 @@ for epoch in range(num_epochs):
     train_loop(train_loader, model, loss, optimizer)
     test_loop(test_loader, model, loss)
 
-torch.save(model.state_dict(), 'number.model')
+torch.save(model.state_dict(), 'trained_models/convolutional.model')
 print('Model saved')
 
 #https://pytorch.org/tutorials/beginner/basics/intro.html

@@ -1,13 +1,13 @@
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
-from torch import nn
 
 class HebrewNet(nn.Module):
     def __init__(self):
         super(HebrewNet, self).__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(50*50, 256),
+            nn.Linear(32*32, 256),
             nn.Sigmoid(),
             #nn.Linear(512, 512),
             #nn.ReLU(),
@@ -21,8 +21,6 @@ class HebrewNet(nn.Module):
         logits = self.linear_relu_stack(x)
         return logits
 
-# https://towardsdatascience.com/implementing-yann-lecuns-lenet-5-in-pytorch-5e05a0911320
-# https://pytorch.org/tutorials/beginner/blitz/neural_networks_tutorial.html#sphx-glr-beginner-blitz-neural-networks-tutorial-py
 class ConvolutionalNet(nn.Module):
     def __init__(self):
         super(ConvolutionalNet, self).__init__()
@@ -41,7 +39,10 @@ class ConvolutionalNet(nn.Module):
         # If the size is a square, you can specify with a single number
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
         x = torch.flatten(x, 1) # flatten all dimensions except the batch dimension
-        x = F.sigmoid(self.fc1(x))
+        x = F.relu(self.fc1(x))
         x = F.sigmoid(self.fc2(x))
         x = self.fc3(x)
         return x
+
+# https://towardsdatascience.com/implementing-yann-lecuns-lenet-5-in-pytorch-5e05a0911320
+# https://pytorch.org/tutorials/beginner/blitz/neural_networks_tutorial.html#sphx-glr-beginner-blitz-neural-networks-tutorial-py
