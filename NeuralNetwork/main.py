@@ -1,11 +1,13 @@
+from ast import arguments
 import functions.function as f
 import torch
 
 from models.model import ConvolutionalNet
 from models.model import HebrewNet
 
-# Get input from user
-if (False):
+model_type= "Conv"
+
+if (model_type == "Conv"):
     model = ConvolutionalNet()
     model.load_state_dict(torch.load('trained_models/convolutional.model'))
 else:
@@ -15,7 +17,7 @@ else:
 model.eval()
 
 # Load images
-path = 'inputdata/' #Get input from user
+path = "inputdata/"
 classes = ['alef', 'het', 'mem', 'shin']
 
 (images, labels, num_files) = f.load_images(path)
