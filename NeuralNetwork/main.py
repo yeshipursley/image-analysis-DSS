@@ -1,6 +1,7 @@
 from ast import arguments
 import functions.function as f
 import torch
+import numpy as np
 
 from models.model import ConvolutionalNet
 from models.model import HebrewNet

@@ -21,7 +21,12 @@ def display_results(num_files, results, classes, images, labels):
             image_plot.imshow(images[i], cmap='gray')
             image_plot.set_xticks([])
             image_plot.set_yticks([])
-            image_plot.set_xlabel(f"Predicted: {classes[predicted_label]} ({predictions[predicted_label]:>0.1f}%) \n Actual: {labels[i]}")
+            if(classes[predicted_label] == labels[i]):
+                color = 'blue'
+            else:
+                color = 'red'
+            image_plot.set_xlabel(f"Predicted: {classes[predicted_label]} ({predictions[predicted_label]:>0.1f}%) \n Actual: {labels[i]}", color=color)
+            
 
             clrs = ['grey' if (x < max(predictions)) else 'red' for x in predictions ]
             graph_plot.barh(range(4), predictions, color=clrs)
