@@ -1,3 +1,4 @@
+from numpy import percentile
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -6,20 +7,17 @@ class HebrewNet(nn.Module):
     def __init__(self):
         super(HebrewNet, self).__init__()
         self.flatten = nn.Flatten()
-        self.linear_relu_stack = nn.Sequential(
-            nn.Linear(32*32, 256),
-            nn.Sigmoid(),
-            #nn.Linear(512, 512),
-            #nn.ReLU(),
-            nn.Dropout(0.25),
-            nn.Linear(256, 4),
-            
-        )
+        self.fc1 = nn.Linear(32*32, 256)
+        self.fc2 = nn.Linear(256, 128)
+        self.fc3 = nn.Linear(128, 4)
 
     def forward(self, x):
         x = self.flatten(x)
-        logits = self.linear_relu_stack(x)
-        return logits
+        x = self.fc1(x)
+        x = self.fc2(torch.relu(x))
+        x = self.fc3(torch.sigmoid(x))
+        return x
+
 
 class ConvolutionalNet(nn.Module):
     def __init__(self):

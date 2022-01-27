@@ -6,9 +6,9 @@ import numpy as np
 from models.model import ConvolutionalNet
 from models.model import HebrewNet
 
-model_type= "Conv"
+model_type= "HebrewNet"
 
-if (model_type == "Conv"):
+if (model_type == "conv"):
     model = ConvolutionalNet()
     model.load_state_dict(torch.load('trained_models/convolutional.model'))
 else:
@@ -19,7 +19,7 @@ model.eval()
 
 # Load images
 path = "inputdata/"
-classes = ['alef', 'het', 'mem', 'shin']
+classes = ['alef', 'he', 'mem', 'shin']
 
 (images, labels, num_files) = f.load_images(path)
 
