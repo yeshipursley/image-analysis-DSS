@@ -29,8 +29,8 @@ def display_results(num_files, results, classes, images, labels):
             
 
             clrs = ['grey' if (x < max(predictions)) else 'red' for x in predictions ]
-            graph_plot.barh(range(4), predictions, color=clrs)
-            graph_plot.set_yticks(range(4))
+            graph_plot.barh(range(22), predictions, color=clrs)
+            graph_plot.set_yticks(range(22))
             graph_plot.set_xticks([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
             graph_plot.set_xlim([0, 100])
             graph_plot.set_yticklabels(classes)
@@ -39,19 +39,28 @@ def display_results(num_files, results, classes, images, labels):
         plt.tight_layout()
         plt.show()
 
-def predict(image_array, model):
-    predictions = list()
-    with torch.no_grad():
-        for image in image_array:
-            x = torch.from_numpy(image).float()
-            x = (x.unsqueeze(0).unsqueeze(0))
+def display_results_wo_graph(num_files, results, classes, images, labels):
+        fig, axes = plt.subplots(5, 5)
+        for i, ax in enumerate(axes.flatten()):
+            if(i >= num_files):
+                break
 
-            prediction = model(x)
-            perc = np.array(nnf.softmax(prediction[0], dim=0))
-            predictions.append(perc)
+            predictions = results[i] * 100
+            predicted_label = np.argmax(predictions)
+
+            ax.imshow(images[i], cmap='gray')
+            ax.set_xticks([])
+            ax.set_yticks([])
+            if(classes[predicted_label] == labels[i]):
+                color = 'blue'
+            else:
+                color = 'red'
+            ax.set_xlabel(f"Predicted: {classes[predicted_label]} ({predictions[predicted_label]:>0.1f}%) \n Actual: {labels[i]}", color=color)
         
-    return predictions
-
+        fig.set_figheight(10)
+        plt.tight_layout()
+        plt.show()
+        
 def load_images(path):
     num_files = len(os.listdir(path))
     (images, labels) = (np.zeros((num_files, 32, 32)), list()) # np array
@@ -68,4 +77,4 @@ def load_images(path):
         labels.append(filename)
         images[i] = np_image
     
-    return (images, labels, num_files)
+    return (images, labels, os.listdir(path),num_files)

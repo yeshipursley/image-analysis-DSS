@@ -3,25 +3,27 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class HebrewNet(nn.Module):
+CLASSES = ['alef', 'ayin', 'bet', 'dalet', 'gimel', 'het', 'he', 'kaf', 'lamed', 'mem', 'nun', 'pe', 'qof', 'resh', 'samekh', 'shin', 'tav', 'tet', 'tsadi', 'vav', 'yod', 'zayin']
+
+class Linear(nn.Module):
     def __init__(self):
-        super(HebrewNet, self).__init__()
+        super(Linear, self).__init__()
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(32*32, 256)
         self.fc2 = nn.Linear(256, 128)
-        self.fc3 = nn.Linear(128, 4)
+        self.fc3 = nn.Linear(128, len(CLASSES))
 
     def forward(self, x):
         x = self.flatten(x)
         x = self.fc1(x)
         x = self.fc2(torch.relu(x))
-        x = self.fc3(torch.sigmoid(x))
+        x = self.fc3(torch.relu(x))
         return x
 
 
-class ConvolutionalNet(nn.Module):
+class Convolutional(nn.Module):
     def __init__(self):
-        super(ConvolutionalNet, self).__init__()
+        super(Convolutional, self).__init__()
         # 1 input image channel, 6 output channels, 5x5 square convolution
         # kernel
         self.conv1 = nn.Conv2d(1, 6, 5)
@@ -29,7 +31,7 @@ class ConvolutionalNet(nn.Module):
         # an affine operation: y = Wx + b
         self.fc1 = nn.Linear(16 * 5 * 5, 120)  # 5*5 from image dimension
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 4)
+        self.fc3 = nn.Linear(84, len(CLASSES))
 
     def forward(self, x):
         # Max pooling over a (2, 2) window

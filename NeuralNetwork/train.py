@@ -9,23 +9,23 @@ from sklearn import metrics
 import torchvision.transforms as transforms
 
 from datasets.dataset import HebrewDataset
-from models.model import ConvolutionalNet, HebrewNet
+from models.model import Convolutional, Linear
 
 # Hyperparameters
-learning_rate = 0.001
+learning_rate = 0.01
 batch_size = 32
-num_epochs = 10
+num_epochs = 20
 
 # Load datasets
-train_set = HebrewDataset('datasets/csv/train.csv', 'datasets/train', transform=transforms.ToTensor())
-test_set = HebrewDataset('datasets/csv/test.csv', 'datasets/test', transform=transforms.ToTensor())
+train_set = HebrewDataset('datasets/train.csv', 'datasets/train', transform=transforms.ToTensor())
+test_set = HebrewDataset('datasets/test.csv', 'datasets/test', transform=transforms.ToTensor())
 
 # Create data loaders
 test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
 train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 
 # Create model
-model = HebrewNet()
+model = Linear()
 model.train()
 
 # Optimizer & Loss
@@ -66,11 +66,10 @@ def test_loop(dataloader, model, loss_fn):
     test_loss /= num_batches
     correct /= size
 
-    #precision = metrics.precision_score(y_true, y_pred, average="micro")
-    #recall = metrics.recall_score(y_true, y_pred, average="micro")
-    #f1_score = metrics.f1_score(y_true, y_pred, average="micro")
+    print(f"\n --- Confusion Matrix ---")
+    print(metrics.confusion_matrix(y_true, y_pred))
     print(f"\n --- Classification Report ---")
-    print(metrics.classification_report(y_true, y_pred))
+    print(metrics.classification_report(y_true, y_pred, zero_division=True))
 
     print(f"--- Test Error ---\n" +
     f"Accuracy  : {(100*correct):>0.1f}% \n" +
