@@ -5,9 +5,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 import csv
 
+# Dont change
 new_path = "datasets"
+folder_path = "characters"
 
-folder_path = "single_character"
+# check for files
+print("Checking if files and directories exist")
+if not os.path.isfile('datasets/test.csv'):
+    f = open('datasets/test.csv', 'x')
+    f.close()
+
+if not os.path.isfile('datasets/train.csv'):
+    f = open('datasets/train.csv', 'x')
+    f.close()
+
+if not os.path.isdir('datasets/train'):
+    os.mkdir('datasets/train')
+
+if not os.path.isdir('datasets/test'):
+    os.mkdir('datasets/test')
 
 # for each subdirectory in folder
 test_rows = list()
@@ -15,7 +31,8 @@ train_rows = list()
 
 current_letter = 0
 classes = ['alef', 'ayin', 'bet', 'dalet', 'gimel', 'het', 'he', 'kaf', 'lamed', 'mem', 'nun', 'pe', 'qof', 'resh', 'samekh', 'shin', 'tav', 'tet', 'tsadi', 'vav', 'yod', 'zayin']
-folder_path = "single_character"
+
+print("Looping through characters:")
 for subdir, dirs, files in os.walk(folder_path):
     num_files = len(files)
     print("Current subdirectory: \n"+ subdir)
@@ -30,15 +47,14 @@ for subdir, dirs, files in os.walk(folder_path):
         ## Open image              
         image = Image.open(image_path).convert('L')  
         ## Create empty bigger image           
-        new_image = Image.new(image.mode, (64,64), 255)
+        #new_image = Image.new(image.mode, (64,64), 255)
         ## Calculate center position         
-        # x, y = int(image.width/2), int(image.height/2)          
+        #x, y = int(image.width/2), int(image.height/2)          
         ## Paste image in the middle of the emtpy image
-        # new_image.paste(image, (x,y))
-        # new_image = new_image.resize((32,32))
+        #new_image.paste(image, (x,y))
 
         new_image = image.resize((32,32))
-        
+
         # Save image into either training or testing folders
         image_name = label + str(i) + ".png"
         if(i < split):

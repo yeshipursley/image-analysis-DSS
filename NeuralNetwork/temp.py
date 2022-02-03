@@ -8,7 +8,7 @@ import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 # Create a CSV file with all the resized images
-path = 'datasets/test/'
+path = 'inputdata/'
 # num_files = len(os.listdir(path))
 # labels = ['alef', 'het', 'mem', 'shin']
 # whitelist = set('abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ')
@@ -33,12 +33,6 @@ path = 'datasets/test/'
 # writer = csv.writer(f)
 # writer.writerows(dataset)
 # f.close()
-    
-# for i, file in enumerate(os.listdir(path)):
-#     print(file)
-#     image = Image.open(path+file).convert('L')
-#     image = image.resize((32,32))
-#     image.save(path+file)
 
 # for i, file in enumerate(os.listdir(path)):
 #     og_image = Image.open(path+file).convert('L')

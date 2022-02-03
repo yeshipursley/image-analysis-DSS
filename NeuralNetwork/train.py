@@ -13,8 +13,8 @@ from models.model import Convolutional, Linear
 
 # Hyperparameters
 learning_rate = 0.01
-batch_size = 32
-num_epochs = 20
+batch_size = 64
+num_epochs = 50
 
 # Load datasets
 train_set = HebrewDataset('datasets/train.csv', 'datasets/train', transform=transforms.ToTensor())
@@ -25,12 +25,15 @@ test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True)
 train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 
 # Create model
-model = Linear()
+model = Convolutional()
+model_name = 'default'
 model.train()
 
 # Optimizer & Loss
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 loss = nn.CrossEntropyLoss()
+
+accuracy = ""
 
 def train_loop(dataloader, model, loss_function, optimizer):
     size = len(dataloader.dataset)
@@ -80,7 +83,8 @@ for epoch in range(num_epochs):
     train_loop(train_loader, model, loss, optimizer)
     test_loop(test_loader, model, loss)
 
-torch.save(model.state_dict(), 'trained_models/default.model')
-print('Model saved')
+path = 'trained_models/' + model_name + '.model'
+torch.save(model.state_dict(), path)
+print('Model saved as ' + path)
 
 #https://pytorch.org/tutorials/beginner/basics/intro.html

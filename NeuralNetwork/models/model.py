@@ -17,7 +17,7 @@ class Linear(nn.Module):
         x = self.flatten(x)
         x = self.fc1(x)
         x = self.fc2(torch.relu(x))
-        x = self.fc3(torch.relu(x))
+        x = self.fc3(torch.sigmoid(x))
         return x
 
 
@@ -40,7 +40,7 @@ class Convolutional(nn.Module):
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
         x = torch.flatten(x, 1) # flatten all dimensions except the batch dimension
         x = F.relu(self.fc1(x))
-        x = F.sigmoid(self.fc2(x))
+        x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
 
