@@ -91,7 +91,7 @@ def LoadImages(path):
 def main(argv):
     # default values
     input_path = 'data/input'
-    model_path = 'trained_models/default.model'
+    model_path = 'models/default.model'
 
     try:
         opts, args = getopt.getopt(argv,"hi:m:", ["input=", "model="])
@@ -136,6 +136,5 @@ def main(argv):
     print("Graphs will be saved to the data/results folder")
     DisplayResults(results, images, labels)
 
-    
 if __name__ == "__main__":
    main(sys.argv[1:])
