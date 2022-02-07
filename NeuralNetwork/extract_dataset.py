@@ -6,7 +6,6 @@ import numpy as np
 import csv
 
 # Dont change
-new_path = "datasets"
 folder_path = "characters"
 
 # check for files
@@ -35,7 +34,7 @@ classes = ['alef', 'ayin', 'bet', 'dalet', 'gimel', 'het', 'he', 'kaf', 'lamed',
 print("Looping through characters:")
 for subdir, dirs, files in os.walk(folder_path):
     num_files = len(files)
-    print("Current subdirectory: \n"+ subdir)
+    print("Current subdirectory: "+ subdir)
     if(num_files == 0):
         continue
 
@@ -47,13 +46,13 @@ for subdir, dirs, files in os.walk(folder_path):
         ## Open image              
         image = Image.open(image_path).convert('L')  
         ## Create empty bigger image           
-        #new_image = Image.new(image.mode, (64,64), 255)
-        ## Calculate center position         
-        #x, y = int(image.width/2), int(image.height/2)          
-        ## Paste image in the middle of the emtpy image
-        #new_image.paste(image, (x,y))
+        new_image = Image.new(image.mode, (64,64), 255)
+        # Calculate center position         
+        x, y = 32 - int(image.width/2), 32 - int(image.height/2)          
+        # Paste image in the middle of the emtpy image
+        new_image.paste(image, (x,y))
 
-        new_image = image.resize((32,32))
+        #new_image = image.resize((32,32))
 
         # Save image into either training or testing folders
         image_name = label + str(i) + ".png"
