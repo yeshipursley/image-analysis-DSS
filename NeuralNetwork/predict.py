@@ -10,6 +10,7 @@ import sys, getopt
 
 CLASSES = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
 
+# Display of prediction is kinda broken right now
 def DisplayResults(results, images, labels):
     # check for results folder
     if not os.path.isdir('data/results'):
@@ -60,11 +61,21 @@ def PrintResults(results, images, filenames):
         filename = filenames[i]
         label = CLASSES[top_guess]
         percentage = percentages[top_guess] * 100
+
+        additional_guesses = list()
+        if percentage < 50:
+            threshold = percentages[top_guess] - (percentages[top_guess] * 0.5)
+            for p in percentages:
+                if  p >= threshold and p <= percentages[top_guess] and p != percentages[top_guess]:
+                    local_label = CLASSES[percentages.tolist().index(p)]
+                    additional_guesses.append(f'{local_label} ({p * 100:.1f}%)')
         
-        if label in filename:
-            print('\033[92m' + f'Perdicted that {filename} is {label} ({percentage:.1f}%)' + '\033[0m')
+        
+
+        if label in filename.upper():
+            print('\033[92m' + f'Perdicted that {filename} is {label} ({percentage:.1f}%) {"or" if len(additional_guesses) > 0 else ""} {" or ".join(additional_guesses)}' + '\033[0m')
         else:
-            print('\033[91m' +  f'Perdicted that {filename} is {label} ({percentage:.1f}%)' + '\033[0m')
+            print('\033[91m' +  f'Perdicted that {filename} is {label} ({percentage:.1f}%) {"or" if len(additional_guesses) > 0 else ""} {" or ".join(additional_guesses)}' + '\033[0m')
         
         output = Image.fromarray(images[i]).convert('L')
         
@@ -74,8 +85,8 @@ def LoadImages(path):
     num_files = len(os.listdir(path))
     (images, labels) = (np.zeros((num_files, 64, 64)), list()) # np array
     for i, filename in enumerate(os.listdir(path)):
-        pil_image = Image.open(path + filename).convert('L') # Opens the file as a Pillow image
-        np_image = np_image.resize((64,64))
+        pil_image = Image.open(path+ "\\" + filename).convert('L') # Opens the file as a Pillow image
+        pil_image = pil_image.resize((64,64))
         np_image = np.array(pil_image) # Converts the pil image into a numpy array
 
         # Reformat filename

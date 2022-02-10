@@ -1,1 +1,24 @@
-{"models": [{"name": "test", "stats": {"epochs": 5, "train acc": 98.30188679245283, "train loss": 0.0021424536406993867, "val acc ": 93.87254901960785, "val loss": 0.30154631925480707}}, {"name": "default", "stats": {"epochs": 5, "train acc": 96.91823899371069, "train loss": 0.001994224786758423, "val acc ": 92.15686274509804, "val loss": 0.3367944945182119}}]}
+{
+  "models": [
+    {
+      "name": "default",
+      "stats": {
+        "epochs": 5,
+        "train acc": 93.77358490566039,
+        "train loss": 0.01158833384513855,
+        "val acc ": 87.99019607843137,
+        "val loss": 0.4593749599797385
+      }
+    },
+    {
+      "name": "test",
+      "stats": {
+        "epochs": 5,
+        "train acc": 96.85534591194968,
+        "train loss": 0.005689712762832641,
+        "val acc ": 92.8921568627451,
+        "val loss": 0.24312900645392282
+      }
+    }
+  ]
+}

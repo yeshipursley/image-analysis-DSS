@@ -19,6 +19,9 @@ TRAIN_LOSS = list()
 TRAIN_ACC = list()
 VAL_ACC = list()
 VAL_LOSS = list()
+PRESSICION = 0
+RECALL = 0
+FSCORE = 0
 
 def TrainingLoop(dataloader, model, loss_function, optimizer, device):
     size = len(dataloader.dataset)
@@ -58,8 +61,8 @@ def ValidationLoop(dataloader, model, loss_fn, p_c, p_r, device):
             image, label = image.to(device), label.to(device)
             pred = model(image)
             validation_loss += loss_fn(pred, label).item()
-            y_true.extend(label)
-            y_pred.extend(pred.argmax(1))
+            y_true.extend(label.cpu())
+            y_pred.extend(pred.argmax(1).cpu())
             correct += (pred.argmax(1) == label).type(torch.float).sum().item()
 
     validation_loss /= num_batches
@@ -154,7 +157,7 @@ def SaveModel(model, name, epochs):
             })
         
     with open('models/models.json', 'w') as outfile:
-        json.dump(json_object, outfile)
+        json.dump(json_object, outfile, indent=2)
 
 def main(argv):
     # Hyperparameters
@@ -216,7 +219,7 @@ def main(argv):
 
     # Optimizer & Loss
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    loss = nn.CrossEntropyLoss(noramlWeights)
+    loss = nn.CrossEntropyLoss()
 
     time_start = time.time()
     for epoch in range(num_epochs):
