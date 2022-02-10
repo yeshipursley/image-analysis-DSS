@@ -5,8 +5,7 @@ import numpy as np
 import csv
 import sys, getopt
 
-CLASSES = classes = ['alef', 'ayin', 'bet', 'dalet', 'gimel', 'het', 'he', 'kaf', 'lamed', 'mem', 'nun', 'pe', 'qof', 'resh', 'samekh', 'shin', 'tav', 'tet', 'tsadi', 'vav', 'yod', 'zayin']
-
+CLASSES = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
 def Extract(folder_path):
     # Check for directories
     if not os.path.isdir('datasets/train'):
@@ -34,9 +33,13 @@ def Extract(folder_path):
             image = Image.open(image_path).convert('L')  
             ## Create empty bigger image           
             new_image = Image.new(image.mode, (64,64), 255)
-            # Calculate center position         
-            x, y = 32 - int(image.width/2), 32 - int(image.height/2)          
+            ## Resize image if its bigger than the new image
+            if image.height > 64:
+                r = image.height / image.width
+                image = image.resize((int(64/r),64))
+            
             # Paste image in the middle of the emtpy image
+            x, y = 32 - int(image.width/2), 32 - int(image.height/2)  
             new_image.paste(image, (x,y))
 
             #new_image = image.resize((32,32))
@@ -45,10 +48,10 @@ def Extract(folder_path):
             image_name = label + str(i) + ".png"
             if(i < split):
                 new_image.save("datasets/train/" + image_name)
-                train_rows.append((image_name, CLASSES.index(label)))
+                train_rows.append((image_name, CLASSES.index(label.upper())))
             else:
                 new_image.save("datasets/test/" + image_name)
-                test_rows.append((image_name, CLASSES.index(label)))
+                test_rows.append((image_name, CLASSES.index(label.upper())))
         
     return (test_rows, train_rows)
 

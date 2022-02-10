@@ -8,7 +8,7 @@ import numpy as np
 import re
 import sys, getopt
 
-CLASSES = ['alef', 'ayin', 'bet', 'dalet', 'gimel', 'het', 'he', 'kaf', 'lamed', 'mem', 'nun', 'pe', 'qof', 'resh', 'samekh', 'shin', 'tav', 'tet', 'tsadi', 'vav', 'yod', 'zayin']
+CLASSES = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
 
 def DisplayResults(results, images, labels):
     # check for results folder
@@ -102,7 +102,7 @@ def main(argv):
     for opt, arg in opts:
         if opt == '-h':
             # Help
-            print("Usage: python .\\main.py -i <input path> -m <model path>")
+            print("Usage: python .\\predict.py -i <path of your input> -m <path of your trained model>")
             sys.exit()
         elif opt in ("-i"):
             input_path = arg

@@ -1,3 +1,4 @@
+from turtle import left
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
@@ -9,6 +10,7 @@ import time
 import os
 import numpy as np
 from sklearn import metrics
+import json
 
 from dataset import HebrewDataset
 from model import Convolutional, Linear
@@ -18,12 +20,13 @@ TRAIN_ACC = list()
 VAL_ACC = list()
 VAL_LOSS = list()
 
-def TrainingLoop(dataloader, model, loss_function, optimizer):
+def TrainingLoop(dataloader, model, loss_function, optimizer, device):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
     training_loss, correct = 0, 0
 
     for batch, (image, label) in enumerate(dataloader):
+        image, label = image.to(device), label.to(device)
         # Compute prediction and loss
         pred = model(image)
         loss = loss_function(pred, label)
@@ -37,12 +40,14 @@ def TrainingLoop(dataloader, model, loss_function, optimizer):
         if batch % 100 == 0:
             loss, current = loss.item(), batch * len(image)
             training_loss += loss
+            
             print(f'Loss: {loss:>7f} [{current:>5d}/{size:>5d}]')
 
+    print(f'Acc: {(correct/size) * 100:>0.1f}%')
     TRAIN_LOSS.append(training_loss/num_batches)
     TRAIN_ACC.append((correct/size) * 100)
 
-def ValidationLoop(dataloader, model, loss_fn, p_c, p_r):
+def ValidationLoop(dataloader, model, loss_fn, p_c, p_r, device):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
     validation_loss, correct = 0, 0
@@ -50,6 +55,7 @@ def ValidationLoop(dataloader, model, loss_fn, p_c, p_r):
     
     with torch.no_grad():
         for image, label in dataloader:
+            image, label = image.to(device), label.to(device)
             pred = model(image)
             validation_loss += loss_fn(pred, label).item()
             y_true.extend(label)
@@ -74,7 +80,7 @@ def ValidationLoop(dataloader, model, loss_fn, p_c, p_r):
     VAL_ACC.append(100*correct)
     VAL_LOSS.append(validation_loss)
 
-def LoadDataset(batch_size):
+def LoadDataset(device, batch_size):
     # Load datasets
     train_set = HebrewDataset('datasets/train.csv', 'datasets/train', transform=transforms.ToTensor())
     validation_set = HebrewDataset('datasets/test.csv', 'datasets/test', transform=transforms.ToTensor())
@@ -83,31 +89,53 @@ def LoadDataset(batch_size):
     validation_loader = DataLoader(validation_set, batch_size=batch_size, shuffle=True)
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 
+    for data, target in train_loader:
+        data = data.to(device)
+        target = target.to(device)
+
+    for data, target in validation_loader:
+        data = data.to(device)
+        target = target.to(device)
+    
     return (validation_loader, train_loader)
 
-def PlotGraph():
+def PlotGraph(num_epochs):
     plt.title('Validation Error per Epoch')
 
     # Acc graph
-    plt.subplot(1,2,1)
+    plt.subplot(2,1,1)
     plt.ylabel('Accuracy')
-    plt.ylim([0,100])
+    plt.ylim([0,110])
     plt.xlabel('Epochs')
     plt.xticks(range(num_epochs))
-    plt.plot(range(num_epochs), VAL_ACC, label = "Validation")
-    plt.plot(range(num_epochs), TRAIN_ACC, label = "Training")
+    plt.plot(VAL_ACC, label = "Validation")
+    plt.plot(TRAIN_ACC, label = "Training")
     plt.legend()
 
     # Loss graph
-    plt.subplot(1,2,2)
+    plt.subplot(2,1,2)
     plt.ylabel('Loss')
     plt.xlabel('Epochs')
     plt.xticks(range(num_epochs))
-    plt.plot(range(num_epochs), VAL_LOSS, label = "Validation")
-    plt.plot(range(num_epochs), TRAIN_LOSS, label = "Training")
+    plt.plot(VAL_LOSS, label = "Validation")
+    plt.plot(TRAIN_LOSS, label = "Training")
     plt.legend()
 
     plt.show()
+
+def SaveModel(model, name, epochs):
+    path = 'models/' + name + '.model'
+    torch.save(model.state_dict(), path)
+    print('Model saved as ' + path)
+
+    model_dict = {
+        "model" : name,
+        "epochs": epochs,
+        "train acc": TRAIN_ACC[epochs - 1],
+        "train loss": TRAIN_LOSS[epochs - 1],
+        "val acc ": VAL_ACC[epochs - 1],
+        "val loss": VAL_LOSS[epochs - 1]
+    }
 
 def main(argv):
     # Hyperparameters
@@ -118,9 +146,10 @@ def main(argv):
     model_name = 'default'
     print_confusion_matrix = False
     print_classification_report = False
+    device = torch.device("cpu")
 
     try:
-        opts, args = getopt.getopt(argv,"hm:e:", ["model=", "confusion", "report"])
+        opts, args = getopt.getopt(argv,"hm:e:", ["model=", "confusion", "report", "gpu"])
     except:
         # ERROR
         print("Error")
@@ -128,7 +157,13 @@ def main(argv):
     for opt, arg in opts:
         if opt == '-h':
             # Help 
-            print("Usage: ")
+            print("Usage example: train.py -m my_model -e 20 --gpu")
+            print("Options: \n", 
+            "-m <name>: name the final model\n",
+            "-e <epochs>: amount of epochs to run\n", 
+            "--gpu: if you'd like to train with GPU\n",
+            "--confusion: for printing the confusion matrix every epoch\n",
+            "--report: for printing the classification results every epoch\n")
             sys.exit()
         elif opt in ("-m"):
             model_name = arg
@@ -137,38 +172,50 @@ def main(argv):
                 num_epochs = int(arg)
             except:
                 print("argument needs to be a number")
-                exit(2)
+                sys.exit(2)
         elif opt in ("--confusion"):
             print_confusion_matrix = True
         elif opt in ("--report"):
             print_classification_report = True
+        elif opt in ("--gpu"):
+            if torch.cuda.is_available():
+                device = torch.device("cuda:0")
+            else:
+                print('GPU not available, using CPU')
+                device = torch.device("cpu")
 
-    validation_loader, train_loader = LoadDataset(batch_size)
+    validation_loader, train_loader = LoadDataset(device, batch_size)
 
     # Create model
-    model = Convolutional()
+    model = Convolutional().to(device)
     model.train()
+
+    # Weights
+    weights = [228, 104, 19, 74, 251, 106, 9, 50, 16, 137, 64, 104, 186, 66, 12, 50, 33, 28, 28, 78, 208, 48]
+    noramlWeights = [1 - (x/sum(weights)) for x in weights]
+    noramlWeights = torch.FloatTensor(noramlWeights).to(device)
 
     # Optimizer & Loss
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    loss = nn.CrossEntropyLoss()
+    loss = nn.CrossEntropyLoss(noramlWeights)
 
     time_start = time.time()
     for epoch in range(num_epochs):
         print(f'Epoch {epoch + 1}/{num_epochs}\n---------------------')
-        TrainingLoop(train_loader, model, loss, optimizer)
-        ValidationLoop(validation_loader, model, loss, print_confusion_matrix, print_classification_report)
+        TrainingLoop(train_loader, model, loss, optimizer, device)
+        ValidationLoop(validation_loader, model, loss, print_confusion_matrix, print_classification_report, device)
 
-    print("Elapsed time: " + str(time.time() - time_start))
+    print(f'Elapsed time: {time.time() - time_start:>0.2f} seconds')
 
     # Check if directory exists
     if not os.path.isdir('models'):
             os.mkdir('models')
 
     # Save model
-    path = 'models/' + model_name + '.model'
-    torch.save(model.state_dict(), path)
-    print('Model saved as ' + path)
+    SaveModel(model, model_name, num_epochs)
+
+    # Plot errors
+    PlotGraph(num_epochs)
 
 if __name__ == "__main__":
    main(sys.argv[1:])
