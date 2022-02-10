@@ -128,14 +128,33 @@ def SaveModel(model, name, epochs):
     torch.save(model.state_dict(), path)
     print('Model saved as ' + path)
 
-    model_dict = {
-        "model" : name,
+    stats = {
         "epochs": epochs,
         "train acc": TRAIN_ACC[epochs - 1],
         "train loss": TRAIN_LOSS[epochs - 1],
         "val acc ": VAL_ACC[epochs - 1],
         "val loss": VAL_LOSS[epochs - 1]
     }
+
+    with open('models/models.json', 'r') as infile:
+        json_object = json.load(infile)
+
+    found = False
+    for model in json_object['models']:
+        if(model['name'] == name):
+            model['stats'] == stats
+            found = True
+            break
+        
+    if not found:
+        json_object['models'].append(
+            {
+                'name': name, 
+                'stats': stats
+            })
+        
+    with open('models/models.json', 'w') as outfile:
+        json.dump(json_object, outfile)
 
 def main(argv):
     # Hyperparameters

@@ -1,8 +1,15 @@
-s = ["Alef", "Bet", "Gimel", "Dalet", "He", "Vav", "Zayin" "Het", "Tet", "Yod", "Kaf", "Lamed", "Mem", "Nun", "Samekh", "Ayin", "Pe", "Tsadi", "Qof", "Resh", "Shin", "Tav"]
+import json
+with open('models/models.json', 'r') as infile:
+    json_object = json.load(infile)
 
-l = list()
+found = False
+for model in json_object['models']:
+    if(model['name'] == "default"):
+        model['acc'] = 100
+        found = True
+        break
+    
+if not found:
+    json_object['models'].append({'name': 'default', 'acc': 100})
 
-for x in s:
-    l.append(x.upper())
-
-print(l)
+print(json_object)
