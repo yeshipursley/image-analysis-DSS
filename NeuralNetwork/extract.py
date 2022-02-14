@@ -8,11 +8,11 @@ import sys, getopt
 CLASSES = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
 def Extract(folder_path):
     # Check for directories
-    if not os.path.isdir('datasets/train'):
-        os.mkdir('datasets/train')
+    if not os.path.isdir('NeuralNetwork/datasets/train'):
+        os.mkdir('NeuralNetwork/datasets/train')
 
-    if not os.path.isdir('datasets/test'):
-        os.mkdir('datasets/test')
+    if not os.path.isdir('NeuralNetwork/datasets/test'):
+        os.mkdir('NeuralNetwork/datasets/test')
 
     test_rows = list()
     train_rows = list()
@@ -53,10 +53,10 @@ def Extract(folder_path):
             # Save image into either training or testing folders
             image_name = label + str(i) + ".png"
             if(i < split):
-                new_image.save("datasets/train/" + image_name)
+                new_image.save("NeuralNetwork/datasets/train/" + image_name)
                 train_rows.append((image_name, CLASSES.index(label.upper())))
             else:
-                new_image.save("datasets/test/" + image_name)
+                new_image.save("NeuralNetwork/datasets/test/" + image_name)
                 test_rows.append((image_name, CLASSES.index(label.upper())))
         
     return (test_rows, train_rows)
@@ -87,15 +87,15 @@ def main(argv):
             print("Usage: ")
             sys.exit()
         elif opt in ("-d"):
-            folder_path = arg
+            folder_path = 'NeuralNetwork/' + arg
 
     if folder_path == '':
         print('Need to specify a directory')
         exit(2)
 
     # Check if directory exists
-    if not os.path.isdir('datasets'):
-            os.mkdir('datasets')
+    if not os.path.isdir('NeuralNetwork/datasets'):
+            os.mkdir('NeuralNetwork/datasets')
 
     print(folder_path)
     print("Looping through characters:")
@@ -103,8 +103,8 @@ def main(argv):
 
     # Write to csv files
     print("Writing to CSV files")
-    WriteCSV('datasets/test.csv', test_rows)
-    WriteCSV('datasets/train.csv', train_rows)
+    WriteCSV('NeuralNetwork/datasets/test.csv', test_rows)
+    WriteCSV('NeuralNetwork/datasets/train.csv', train_rows)
 
     print("Finished extracting dataset")
 

@@ -13,8 +13,8 @@ CLASSES = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 
 # Display of prediction is kinda broken right now
 def DisplayResults(results, images, labels):
     # check for results folder
-    if not os.path.isdir('data/results'):
-        os.mkdir('data/results')
+    if not os.path.isdir('NeuralNetwork/data/results'):
+        os.mkdir('NeuralNetwork/data/results')
 
     for i, result in enumerate(results):
         fig, ax = plt.subplots(1,2)
@@ -44,14 +44,14 @@ def DisplayResults(results, images, labels):
         graph_plot.set_yticklabels(CLASSES)
 
         fig.tight_layout()
-        fig.savefig('data/results/' + str(i) + '_' + labels[i] + '.png')
+        fig.savefig('NeuralNetwork/data/results/' + str(i) + '_' + labels[i] + '.png')
 
     plt.show()
 
 def PrintResults(results, images, filenames):
     # check for output folder
-    if not os.path.isdir('data/output'):
-        os.mkdir('data/output')
+    if not os.path.isdir('NeuralNetwork/output'):
+        os.mkdir('NeuralNetwork/data/output')
 
     for i, result in enumerate(results):
         percentages = nnf.softmax(result, dim=0)
@@ -79,7 +79,7 @@ def PrintResults(results, images, filenames):
         
         output = Image.fromarray(images[i]).convert('L')
         
-        output.save('data/output/' + str(i) + '-' + label + f'({percentage:.1f}%)' + '.png')
+        output.save('NeuralNetwork/data/output/' + str(i) + '-' + label + f'({percentage:.1f}%)' + '.png')
 
 def LoadImages(path):
     num_files = len(os.listdir(path))
@@ -101,8 +101,8 @@ def LoadImages(path):
 
 def main(argv):
     # default values
-    input_path = 'data/input'
-    model_path = 'models/default.model'
+    input_path = 'NeuralNetwork/data/input'
+    model_path = 'NeuralNetwork/models/default.model'
 
     try:
         opts, args = getopt.getopt(argv,"hi:m:", ["input=", "model="])
@@ -116,9 +116,9 @@ def main(argv):
             print("Usage: python .\\predict.py -i <path of your input> -m <path of your trained model>")
             sys.exit()
         elif opt in ("-i"):
-            input_path = arg
+            input_path = 'NeuralNetwork/' + arg
         elif opt in ("-m"):
-            model_path = arg
+            model_path = 'NeuralNetwork/' + arg
 
     # Load model
     print("Loading model", model_path)
@@ -136,8 +136,8 @@ def main(argv):
     print("Finished predicting..")
 
     # Check if there is a folder for data
-    if not os.path.isdir('data'):
-        os.mkdir('data')
+    if not os.path.isdir('NeuralNetwork/data'):
+        os.mkdir('NeuralNetwork/data')
 
     # Prints out all inputs with the strongest prediction
     print("Labeled images will be saved to the data/results folder")
