@@ -8,11 +8,11 @@ import sys, getopt
 CLASSES = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
 def Extract(folder_path):
     # Check for directories
-    if not os.path.isdir('NeuralNetwork/datasets/train'):
-        os.mkdir('NeuralNetwork/datasets/train')
+    if not os.path.isdir('MachineLearning/NeuralNetwork/datasets/train'):
+        os.mkdir('MachineLearning/NeuralNetwork/datasets/train')
 
-    if not os.path.isdir('NeuralNetwork/datasets/test'):
-        os.mkdir('NeuralNetwork/datasets/test')
+    if not os.path.isdir('MachineLearning/NeuralNetwork/datasets/test'):
+        os.mkdir('MachineLearning/NeuralNetwork/datasets/test')
 
     test_rows = list()
     train_rows = list()
@@ -87,15 +87,15 @@ def main(argv):
             print("Usage: ")
             sys.exit()
         elif opt in ("-d"):
-            folder_path = 'NeuralNetwork/' + arg
+            folder_path = 'MachineLearning/NeuralNetwork/' + arg
 
     if folder_path == '':
         print('Need to specify a directory')
         exit(2)
 
     # Check if directory exists
-    if not os.path.isdir('NeuralNetwork/datasets'):
-            os.mkdir('NeuralNetwork/datasets')
+    if not os.path.isdir('MachineLearning/NeuralNetwork/datasets'):
+            os.mkdir('MachineLearning/NeuralNetwork/datasets')
 
     print(folder_path)
     print("Looping through characters:")
@@ -103,8 +103,8 @@ def main(argv):
 
     # Write to csv files
     print("Writing to CSV files")
-    WriteCSV('NeuralNetwork/datasets/test.csv', test_rows)
-    WriteCSV('NeuralNetwork/datasets/train.csv', train_rows)
+    WriteCSV('MachineLearning/NeuralNetwork/datasets/test.csv', test_rows)
+    WriteCSV('MachineLearning/NeuralNetwork/datasets/train.csv', train_rows)
 
     print("Finished extracting dataset")
 

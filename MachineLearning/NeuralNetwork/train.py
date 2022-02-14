@@ -81,8 +81,8 @@ def ValidationLoop(dataloader, model, loss_fn, p_c, p_r, device):
 
 def LoadDataset(device, batch_size):
     # Load datasets
-    train_set = Qlsa('NeuralNetwork/datasets/train.csv', 'NeuralNetwork/datasets/train', transform=transforms.ToTensor())
-    validation_set = Qlsa('NeuralNetwork/datasets/test.csv', 'NeuralNetwork/datasets/test', transform=transforms.ToTensor())
+    train_set = Qlsa('MachineLearning/NeuralNetwork/datasets/train.csv', 'MachineLearning/NeuralNetwork/datasets/train', transform=transforms.ToTensor())
+    validation_set = Qlsa('MachineLearning/NeuralNetwork/datasets/test.csv', 'MachineLearning/NeuralNetwork/datasets/test', transform=transforms.ToTensor())
 
     # Create data loaders
     validation_loader = DataLoader(validation_set, batch_size=batch_size, shuffle=True)
@@ -123,10 +123,10 @@ def PlotGraph(num_epochs):
     plt.show()
 
 def SaveModel(model, name, epochs):
-    if not os.path.isdir('NeuralNetwork/models/' + name):
-        os.mkdir('NeuralNetwork/models/' + name)
+    if not os.path.isdir('MachineLearning/NeuralNetwork/models/' + name):
+        os.mkdir('MachineLearning/NeuralNetwork/models/' + name)
 
-    path = 'NeuralNetwork/models/' + name + '/' + name + '.model'
+    path = 'MachineLearning/NeuralNetwork/models/' + name + '/' + name + '.model'
     torch.save(model.state_dict(), path)
     print('Model saved as ' + path)
 
@@ -138,7 +138,7 @@ def SaveModel(model, name, epochs):
         "val loss": VAL_LOSS[epochs - 1]
     }
 
-    with open('NeuralNetwork/models/models.json', 'r') as infile:
+    with open('MachineLearning/NeuralNetwork/models/models.json', 'r') as infile:
         json_object = json.load(infile)
 
     found = False
@@ -157,7 +157,7 @@ def SaveModel(model, name, epochs):
                 'stats': stats
             })
         
-    with open('NeuralNetwork/models/models.json', 'w') as outfile:
+    with open('MachineLearning/NeuralNetwork/models/models.json', 'w') as outfile:
         json.dump(json_object, outfile, indent=2)
 
 def main(argv):
