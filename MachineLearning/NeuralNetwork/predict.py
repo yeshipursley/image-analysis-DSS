@@ -1,4 +1,4 @@
-from model import Linear, Convolutional
+from model import Convolutional
 import os
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -50,7 +50,7 @@ def DisplayResults(results, images, labels):
 
 def PrintResults(results, images, filenames):
     # check for output folder
-    if not os.path.isdir('MachineLearning/NeuralNetwork/output'):
+    if not os.path.isdir('MachineLearning/NeuralNetwork/data/output'):
         os.mkdir('MachineLearning/NeuralNetwork/data/output')
 
     for i, result in enumerate(results):
@@ -83,11 +83,27 @@ def PrintResults(results, images, filenames):
 
 def LoadImages(path):
     num_files = len(os.listdir(path))
-    (images, labels) = (np.zeros((num_files, 64, 64)), list()) # np array
+    (images, labels) = (np.zeros((num_files, 32, 32)), list()) # np array
     for i, filename in enumerate(os.listdir(path)):
-        pil_image = Image.open(path+ "\\" + filename).convert('L') # Opens the file as a Pillow image
-        pil_image = pil_image.resize((64,64), resample=Image.NEAREST)
-        np_image = np.array(pil_image) # Converts the pil image into a numpy array
+        image = Image.open(path+ "\\" + filename).convert('L') # Opens the file as a Pillow image
+        ## Create empty bigger image   
+        new_size = image.width if image.width > image.height else image.height    
+        new_image = Image.new(image.mode, (new_size,new_size), 255)
+        
+        ## Resize image if its bigger than the new image
+        if image.height > new_size:
+            r = image.height / image.width
+            image = image.resize((int(new_size/r),new_size), resample=Image.NEAREST)
+        elif image.width > new_size:
+            r = image.width / image.height
+            image = image.resize((new_size,(int(new_size/r))), resample=Image.NEAREST)
+
+        # Paste image in the middle of the emtpy image
+        x, y = int((new_size/2)) - int(image.width/2), int((new_size/2)) - int(image.height/2)  
+        new_image.paste(image, (x,y))
+
+        new_image = new_image.resize((32,32), resample=Image.NEAREST)
+        np_image = np.array(new_image) # Converts the pil image into a numpy array
 
         # Reformat filename
         filename = re.sub(r'\d+', '', filename)
@@ -102,7 +118,7 @@ def LoadImages(path):
 def main(argv):
     # default values
     input_path = 'MachineLearning/NeuralNetwork/data/input'
-    model_path = 'MachineLearning/NeuralNetwork/models/default.model'
+    model_path = 'MachineLearning/NeuralNetwork/models/default/default.model'
 
     try:
         opts, args = getopt.getopt(argv,"hi:m:", ["input=", "model="])
@@ -136,7 +152,7 @@ def main(argv):
     print("Finished predicting..")
 
     # Check if there is a folder for data
-    if not os.path.isdir('MachineLearning/data'):
+    if not os.path.isdir('MachineLearning\\NeuralNetwork\\data'):
         os.mkdir('MachineLearning/NeuralNetwork/data')
 
     # Prints out all inputs with the strongest prediction

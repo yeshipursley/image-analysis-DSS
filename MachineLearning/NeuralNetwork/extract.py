@@ -48,15 +48,15 @@ def Extract(folder_path):
             x, y = int((new_size/2)) - int(image.width/2), int((new_size/2)) - int(image.height/2)  
             new_image.paste(image, (x,y))
 
-            new_image = new_image.resize((28,28), resample=Image.NEAREST)
+            new_image = new_image.resize((32,32), resample=Image.NEAREST)
 
             # Save image into either training or testing folders
             image_name = label + str(i) + ".png"
             if(i < split):
-                new_image.save("NeuralNetwork/datasets/train/" + image_name)
+                new_image.save("MachineLearning/NeuralNetwork/datasets/train/" + image_name)
                 train_rows.append((image_name, CLASSES.index(label.upper())))
             else:
-                new_image.save("NeuralNetwork/datasets/test/" + image_name)
+                new_image.save("MachineLearning/NeuralNetwork/datasets/test/" + image_name)
                 test_rows.append((image_name, CLASSES.index(label.upper())))
         
     return (test_rows, train_rows)
