@@ -12,16 +12,13 @@ import numpy as np
 from sklearn import metrics
 import json
 
-from dataset import HebrewDataset
-from model import Convolutional, Linear
+from dataset import Qlsa
+from model import Convolutional
 
 TRAIN_LOSS = list()
 TRAIN_ACC = list()
 VAL_ACC = list()
 VAL_LOSS = list()
-PRESSICION = 0
-RECALL = 0
-FSCORE = 0
 
 def TrainingLoop(dataloader, model, loss_function, optimizer, device):
     size = len(dataloader.dataset)
@@ -40,10 +37,9 @@ def TrainingLoop(dataloader, model, loss_function, optimizer, device):
         loss.backward()
         optimizer.step()
 
+        loss, current = loss.item(), batch * len(image)
+        training_loss += loss
         if batch % 100 == 0:
-            loss, current = loss.item(), batch * len(image)
-            training_loss += loss
-            
             print(f'Loss: {loss:>7f} [{current:>5d}/{size:>5d}]')
 
     print(f'Acc: {(correct/size) * 100:>0.1f}%')
@@ -85,8 +81,8 @@ def ValidationLoop(dataloader, model, loss_fn, p_c, p_r, device):
 
 def LoadDataset(device, batch_size):
     # Load datasets
-    train_set = HebrewDataset('datasets/train.csv', 'datasets/train', transform=transforms.ToTensor())
-    validation_set = HebrewDataset('datasets/test.csv', 'datasets/test', transform=transforms.ToTensor())
+    train_set = Qlsa('datasets/train.csv', 'datasets/train', transform=transforms.ToTensor())
+    validation_set = Qlsa('datasets/test.csv', 'datasets/test', transform=transforms.ToTensor())
 
     # Create data loaders
     validation_loader = DataLoader(validation_set, batch_size=batch_size, shuffle=True)
@@ -127,7 +123,10 @@ def PlotGraph(num_epochs):
     plt.show()
 
 def SaveModel(model, name, epochs):
-    path = 'models/' + name + '.model'
+    if not os.path.isdir('models/' + name):
+        os.mkdir('models/' + name)
+
+    path = 'models/' + name + '/' + name + '.model'
     torch.save(model.state_dict(), path)
     print('Model saved as ' + path)
 
@@ -145,7 +144,9 @@ def SaveModel(model, name, epochs):
     found = False
     for model in json_object['models']:
         if(model['name'] == name):
-            model['stats'] == stats
+            print(model['stats'])
+            model['stats'] = stats
+            print(model['stats'])
             found = True
             break
         

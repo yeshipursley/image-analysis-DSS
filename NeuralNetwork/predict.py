@@ -86,7 +86,7 @@ def LoadImages(path):
     (images, labels) = (np.zeros((num_files, 64, 64)), list()) # np array
     for i, filename in enumerate(os.listdir(path)):
         pil_image = Image.open(path+ "\\" + filename).convert('L') # Opens the file as a Pillow image
-        pil_image = pil_image.resize((64,64))
+        pil_image = pil_image.resize((64,64), resample=Image.NEAREST)
         np_image = np.array(pil_image) # Converts the pil image into a numpy array
 
         # Reformat filename

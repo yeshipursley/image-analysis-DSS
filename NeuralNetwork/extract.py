@@ -31,18 +31,24 @@ def Extract(folder_path):
             image_path = subdir + "\\" + file     
             ## Open image              
             image = Image.open(image_path).convert('L')  
-            ## Create empty bigger image           
-            new_image = Image.new(image.mode, (64,64), 255)
-            ## Resize image if its bigger than the new image
-            if image.height > 64:
-                r = image.height / image.width
-                image = image.resize((int(64/r),64))
             
+            ## Create empty bigger image   
+            new_size = image.width if image.width > image.height else image.height    
+            new_image = Image.new(image.mode, (new_size,new_size), 255)
+            
+            ## Resize image if its bigger than the new image
+            if image.height > new_size:
+                r = image.height / image.width
+                image = image.resize((int(new_size/r),new_size), resample=Image.NEAREST)
+            elif image.width > new_size:
+                r = image.width / image.height
+                image = image.resize((new_size,(int(new_size/r))), resample=Image.NEAREST)
+
             # Paste image in the middle of the emtpy image
-            x, y = 32 - int(image.width/2), 32 - int(image.height/2)  
+            x, y = int((new_size/2)) - int(image.width/2), int((new_size/2)) - int(image.height/2)  
             new_image.paste(image, (x,y))
 
-            #new_image = image.resize((32,32))
+            new_image = new_image.resize((28,28), resample=Image.NEAREST)
 
             # Save image into either training or testing folders
             image_name = label + str(i) + ".png"
