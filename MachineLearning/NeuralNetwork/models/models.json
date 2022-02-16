@@ -1,53 +1,13 @@
 {
   "models": [
     {
-      "name": "40x40_pasted",
-      "stats": {
-        "epochs": 20,
-        "train acc": 100.0,
-        "train loss": 6.382071671396262e-05,
-        "val acc ": 93.13725490196079,
-        "val loss": 0.538681719984327
-      }
-    },
-    {
-      "name": "64x64_pasted",
-      "stats": {
-        "epochs": 20,
-        "train acc": 99.18238993710692,
-        "train loss": 0.025860724841477348,
-        "val acc ": 92.15686274509804,
-        "val loss": 0.44835244544914793
-      }
-    },
-    {
-      "name": "minimal_pasted",
-      "stats": {
-        "epochs": 20,
-        "train acc": 100.0,
-        "train loss": 2.2889459087309662e-05,
-        "val acc ": 93.87254901960785,
-        "val loss": 0.32789814658463
-      }
-    },
-    {
-      "name": "minimal_pasted_28resized",
-      "stats": {
-        "epochs": 20,
-        "train acc": 97.41721854304636,
-        "train loss": 0.09600805204051237,
-        "val acc ": 92.5257731958763,
-        "val loss": 0.2006845259581626
-      }
-    },
-    {
       "name": "default",
       "stats": {
-        "epochs": 20,
-        "train acc": 99.60264900662251,
-        "train loss": 0.016203800250271645,
-        "val acc ": 94.84536082474226,
-        "val loss": 0.16707998208169425
+        "epochs": 5,
+        "train acc": 96.26436781609196,
+        "train loss": 0.13520964175801387,
+        "val acc ": 94.46808510638299,
+        "val loss": 0.209559370453159
       }
     }
   ]

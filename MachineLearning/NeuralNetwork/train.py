@@ -81,8 +81,8 @@ def ValidationLoop(dataloader, model, loss_fn, p_c, p_r, device):
 
 def LoadDataset(device, batch_size):
     # Load datasets
-    train_set = Qlsa('MachineLearning/NeuralNetwork/datasets/train.csv', 'MachineLearning/NeuralNetwork/datasets/train', transform=transforms.ToTensor())
-    validation_set = Qlsa('MachineLearning/NeuralNetwork/datasets/test.csv', 'MachineLearning/NeuralNetwork/datasets/test', transform=transforms.ToTensor())
+    train_set = Qlsa('MachineLearning/NeuralNetwork/datasets/train.csv', 'MachineLearning/NeuralNetwork/datasets/images', transform=transforms.ToTensor())
+    validation_set = Qlsa('MachineLearning/NeuralNetwork/datasets/test.csv', 'MachineLearning/NeuralNetwork/datasets/images', transform=transforms.ToTensor())
 
     # Create data loaders
     validation_loader = DataLoader(validation_set, batch_size=batch_size, shuffle=True)
@@ -144,9 +144,7 @@ def SaveModel(model, name, epochs):
     found = False
     for model in json_object['models']:
         if(model['name'] == name):
-            print(model['stats'])
             model['stats'] = stats
-            print(model['stats'])
             found = True
             break
         
@@ -214,9 +212,9 @@ def main(argv):
     model.train()
 
     # Weights
-    weights = [228, 104, 19, 74, 251, 106, 9, 50, 16, 137, 64, 104, 186, 66, 12, 50, 33, 28, 28, 78, 208, 48]
-    noramlWeights = [1 - (x/sum(weights)) for x in weights]
-    noramlWeights = torch.FloatTensor(noramlWeights).to(device)
+    #weights = [228, 104, 19, 74, 251, 106, 9, 50, 16, 137, 64, 104, 186, 66, 12, 50, 33, 28, 28, 78, 208, 48]
+    #noramlWeights = [1 - (x/sum(weights)) for x in weights]
+    #noramlWeights = torch.FloatTensor(noramlWeights).to(device)
 
     # Optimizer & Loss
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -231,8 +229,8 @@ def main(argv):
     print(f'Elapsed time: {time.time() - time_start:>0.2f} seconds')
 
     # Check if directory exists
-    if not os.path.isdir('models'):
-            os.mkdir('models')
+    if not os.path.isdir('MachineLearning/NeuralNetwork/models'):
+            os.mkdir('MachineLearning/NeuralNetwork/models')
 
     # Save model
     SaveModel(model, model_name, num_epochs)

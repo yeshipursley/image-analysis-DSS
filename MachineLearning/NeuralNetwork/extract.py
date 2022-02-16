@@ -1,82 +1,99 @@
 import os
+from re import sub
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
-import csv
+import csv, random
 import sys, getopt
 
 CLASSES = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
-def Extract(folder_path):
+def ConvertImage(image):
+    ## Create empty bigger image   
+    new_size = image.width if image.width > image.height else image.height    
+    new_image = Image.new(image.mode, (new_size,new_size), 255)
+    
+    ## Resize image if its bigger than the new image
+    if image.height > new_size:
+        r = image.height / image.width
+        image = image.resize((int(new_size/r),new_size), resample=Image.NEAREST)
+    elif image.width > new_size:
+        r = image.width / image.height
+        image = image.resize((new_size,(int(new_size/r))), resample=Image.NEAREST)
+
+    # Paste image in the middle of the emtpy image
+    x, y = int((new_size/2)) - int(image.width/2), int((new_size/2)) - int(image.height/2)  
+    new_image.paste(image, (x,y))
+
+    return new_image.resize((32,32), resample=Image.NEAREST)
+
+def Extract(folder_path, whitelist):
     # Check for directories
-    if not os.path.isdir('MachineLearning/NeuralNetwork/datasets/train'):
-        os.mkdir('MachineLearning/NeuralNetwork/datasets/train')
+    #if not os.path.isdir('MachineLearning/NeuralNetwork/datasets/train'):
+    #    os.mkdir('MachineLearning/NeuralNetwork/datasets/train')
 
-    if not os.path.isdir('MachineLearning/NeuralNetwork/datasets/test'):
-        os.mkdir('MachineLearning/NeuralNetwork/datasets/test')
+    #if not os.path.isdir('MachineLearning/NeuralNetwork/datasets/test'):
+    #    os.mkdir('MachineLearning/NeuralNetwork/datasets/test')
 
-    test_rows = list()
-    train_rows = list()
+    rows = [list() for x in range(22)]
     
     # for each subdirectory in folder
     for subdir, dirs, files in os.walk(folder_path):
         num_files = len(files)
-        print("Current subdirectory: "+ subdir)
+        
         if(num_files == 0):
             continue
 
-        split = int(num_files * 0.8)
-        label = subdir[len(folder_path)+1:-10]
-
+        print("Current subdirectory: "+ subdir)
         for i, file in enumerate(files):
-            image_path = subdir + "\\" + file     
-            ## Open image              
-            image = Image.open(image_path).convert('L')  
+            # Find label 
+            for className in CLASSES:
+                if className in file.upper():
+                    label = className
+                    break
+
+            if label not in whitelist and len(whitelist) > 0:
+                continue
+
+            image = Image.open(subdir + "\\" + file ).convert('L')  
             
-            ## Create empty bigger image   
-            new_size = image.width if image.width > image.height else image.height    
-            new_image = Image.new(image.mode, (new_size,new_size), 255)
-            
-            ## Resize image if its bigger than the new image
-            if image.height > new_size:
-                r = image.height / image.width
-                image = image.resize((int(new_size/r),new_size), resample=Image.NEAREST)
-            elif image.width > new_size:
-                r = image.width / image.height
-                image = image.resize((new_size,(int(new_size/r))), resample=Image.NEAREST)
+            new_image = ConvertImage(image)
+            new_name = label + str(i) + ".png"
 
-            # Paste image in the middle of the emtpy image
-            x, y = int((new_size/2)) - int(image.width/2), int((new_size/2)) - int(image.height/2)  
-            new_image.paste(image, (x,y))
-
-            new_image = new_image.resize((32,32), resample=Image.NEAREST)
-
-            # Save image into either training or testing folders
-            image_name = label + str(i) + ".png"
-            if(i < split):
-                new_image.save("MachineLearning/NeuralNetwork/datasets/train/" + image_name)
-                train_rows.append((image_name, CLASSES.index(label.upper())))
-            else:
-                new_image.save("MachineLearning/NeuralNetwork/datasets/test/" + image_name)
-                test_rows.append((image_name, CLASSES.index(label.upper())))
+            new_image.save("MachineLearning/NeuralNetwork/datasets/images/" + new_name)
+            index = CLASSES.index(label.upper())
+            rows[index].append((new_name,index))
         
-    return (test_rows, train_rows)
+    return rows
 
-def WriteCSV(filepath, rows):
-    if not os.path.isfile(filepath):
-        f = open(filepath, 'x')
+def WriteCSV(rows):
+    if not os.path.isfile('MachineLearning/NeuralNetwork/datasets/test.csv'):
+        f = open('MachineLearning/NeuralNetwork/datasets/test.csv', 'x')
         f.close()
 
-    # Write to csv files
-    with open(filepath, 'w') as csvfile:
+    if not os.path.isfile('MachineLearning/NeuralNetwork/datasets/train.csv'):
+        f = open('MachineLearning/NeuralNetwork/datasets/train.csv', 'x')
+        f.close()
+
+    for row in rows:
+        random.shuffle(row)
+        l = int(len(row) * 0.8)
+        train, test = row[:l], row[l:]
+
+        with open('MachineLearning/NeuralNetwork/datasets/test.csv', 'a') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerows(rows)
+            writer.writerows(test)
+        
+        with open('MachineLearning/NeuralNetwork/datasets/train.csv', 'a') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerows(train)
 
 def main(argv):
     # default values
     folder_path = ''
+    whitelist = list()
 
     try:
-        opts, args = getopt.getopt(argv,"hd:", ["directory="])
+        opts, args = getopt.getopt(argv,"hd:", ["whitelist="])
     except:
         # ERROR
         print("Error")
@@ -87,7 +104,9 @@ def main(argv):
             print("Usage: ")
             sys.exit()
         elif opt in ("-d"):
-            folder_path = 'MachineLearning/NeuralNetwork/' + arg
+            folder_path = arg
+        elif opt in ("--whitelist"):
+            whitelist = arg.split(',')
 
     if folder_path == '':
         print('Need to specify a directory')
@@ -97,16 +116,17 @@ def main(argv):
     if not os.path.isdir('MachineLearning/NeuralNetwork/datasets'):
             os.mkdir('MachineLearning/NeuralNetwork/datasets')
 
-    print(folder_path)
-    print("Looping through characters:")
-    test_rows, train_rows = Extract(folder_path)
+    # Check if directory exists
+    if not os.path.isdir('MachineLearning/NeuralNetwork/datasets/images'):
+            os.mkdir('MachineLearning/NeuralNetwork/datasets/images')
 
+    rows = Extract(folder_path, whitelist)
+    
     # Write to csv files
-    print("Writing to CSV files")
-    WriteCSV('MachineLearning/NeuralNetwork/datasets/test.csv', test_rows)
-    WriteCSV('MachineLearning/NeuralNetwork/datasets/train.csv', train_rows)
+    WriteCSV(rows)
+    #WriteCSV('MachineLearning/NeuralNetwork/datasets/train.csv', train_rows)
 
-    print("Finished extracting dataset")
+    print("Finished.")
 
 if __name__ == "__main__":
    main(sys.argv[1:])
