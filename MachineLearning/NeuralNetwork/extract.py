@@ -26,14 +26,7 @@ def ConvertImage(image):
 
     return new_image.resize((32,32), resample=Image.NEAREST)
 
-def Extract(folder_path, whitelist):
-    # Check for directories
-    #if not os.path.isdir('MachineLearning/NeuralNetwork/datasets/train'):
-    #    os.mkdir('MachineLearning/NeuralNetwork/datasets/train')
-
-    #if not os.path.isdir('MachineLearning/NeuralNetwork/datasets/test'):
-    #    os.mkdir('MachineLearning/NeuralNetwork/datasets/test')
-
+def Extract(folder_path):
     rows = [list() for x in range(22)]
     
     # for each subdirectory in folder
@@ -51,21 +44,18 @@ def Extract(folder_path, whitelist):
                     label = className
                     break
 
-            if label not in whitelist and len(whitelist) > 0:
-                continue
-
             image = Image.open(subdir + "\\" + file ).convert('L')  
-            
             new_image = ConvertImage(image)
-            new_name = label + str(i) + ".png"
+            new_name = f'{label}_{i}.png'
 
+            # Save stuff
             new_image.save("MachineLearning/NeuralNetwork/datasets/images/" + new_name)
             index = CLASSES.index(label.upper())
             rows[index].append((new_name,index))
         
     return rows
 
-def WriteCSV(rows):
+def WriteCSV(rows, limit, whitelist):
     if not os.path.isfile('MachineLearning/NeuralNetwork/datasets/test.csv'):
         f = open('MachineLearning/NeuralNetwork/datasets/test.csv', 'x')
         f.close()
@@ -75,7 +65,15 @@ def WriteCSV(rows):
         f.close()
 
     for row in rows:
+        if not row:
+            continue
+        
+        label = row[0][0][0].split('_')[0]
+        if label not in whitelist and len(whitelist) > 0:
+            continue
+
         random.shuffle(row)
+        row = row[:limit if limit != 0 else len(row)]
         l = int(len(row) * 0.8)
         train, test = row[:l], row[l:]
 
@@ -93,7 +91,7 @@ def main(argv):
     whitelist = list()
 
     try:
-        opts, args = getopt.getopt(argv,"hd:", ["whitelist="])
+        opts, args = getopt.getopt(argv,"hd:l:", ["whitelist=", "limit="])
     except:
         # ERROR
         print("Error")
@@ -107,6 +105,8 @@ def main(argv):
             folder_path = arg
         elif opt in ("--whitelist"):
             whitelist = arg.split(',')
+        elif opt in ("--limit", '-l'):
+            limit = int(arg)
 
     if folder_path == '':
         print('Need to specify a directory')
@@ -120,11 +120,9 @@ def main(argv):
     if not os.path.isdir('MachineLearning/NeuralNetwork/datasets/images'):
             os.mkdir('MachineLearning/NeuralNetwork/datasets/images')
 
-    rows = Extract(folder_path, whitelist)
-    
-    # Write to csv files
-    WriteCSV(rows)
-    #WriteCSV('MachineLearning/NeuralNetwork/datasets/train.csv', train_rows)
+    # Extract and Write to csv files
+    rows = Extract(folder_path)
+    WriteCSV(rows, limit, whitelist)
 
     print("Finished.")
 
