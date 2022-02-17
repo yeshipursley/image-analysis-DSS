@@ -64,11 +64,15 @@ def WriteCSV(rows, limit, whitelist):
         f = open('MachineLearning/NeuralNetwork/datasets/train.csv', 'x')
         f.close()
 
+    if not os.path.isfile('MachineLearning/NeuralNetwork/datasets/overview.csv'):
+        f = open('MachineLearning/NeuralNetwork/datasets/overview.csv', 'x')
+        f.close()
+
     for row in rows:
         if not row:
             continue
         
-        label = row[0][0][0].split('_')[0]
+        label = row[0][0].split('_')[0]
         if label not in whitelist and len(whitelist) > 0:
             continue
 
@@ -76,6 +80,10 @@ def WriteCSV(rows, limit, whitelist):
         row = row[:limit if limit != 0 else len(row)]
         l = int(len(row) * 0.8)
         train, test = row[:l], row[l:]
+
+        with open('MachineLearning/NeuralNetwork/datasets/overview.csv', 'a') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([label, str(len(row))])
 
         with open('MachineLearning/NeuralNetwork/datasets/test.csv', 'a') as csvfile:
             writer = csv.writer(csvfile)

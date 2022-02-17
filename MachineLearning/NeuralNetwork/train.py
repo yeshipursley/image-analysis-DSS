@@ -183,7 +183,7 @@ def main(argv):
     learning_rate = 0.0005
     batch_size = 64
     num_epochs = 20
-    stopping_point = 0.01
+    stopping_point = -1
 
     model_name = 'default'
     print_confusion_matrix = False
@@ -191,7 +191,7 @@ def main(argv):
     device = torch.device("cpu")
 
     try:
-        opts, args = getopt.getopt(argv,"hm:e:", ["model=", "confusion", "report", "gpu"])
+        opts, args = getopt.getopt(argv,"hm:e:", ["model=", "confusion", "report", "gpu", "earlystop="])
     except:
         # ERROR
         print("Error")
@@ -219,6 +219,8 @@ def main(argv):
             print_confusion_matrix = True
         elif opt in ("--report"):
             print_classification_report = True
+        elif opt in ("--earlystop"):
+            stopping_point = int(arg)
         elif opt in ("--gpu"):
             if torch.cuda.is_available():
                 device = torch.device("cuda:0")
