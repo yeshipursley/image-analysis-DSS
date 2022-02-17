@@ -21,16 +21,20 @@ VAL_ACC = list()
 VAL_LOSS = list()
 
 def TrainingLoop(dataloader, model, loss_function, optimizer, device):
+    print("--- Training Loop ---")
     size = len(dataloader.dataset)
+    batch_size = dataloader.batch_size
     num_batches = len(dataloader)
-    training_loss, correct = 0, 0
+    train_loss, train_acc, correct = 0, 0, 0
 
+    # Main loop
     for batch, (image, label) in enumerate(dataloader):
         image, label = image.to(device), label.to(device)
         # Compute prediction and loss
         pred = model(image)
         loss = loss_function(pred, label)
-        correct += (pred.argmax(1) == label).type(torch.float).sum().item()
+        correct = (pred.argmax(1) == label).sum()
+        
 
         # Backpropagation
         optimizer.zero_grad()
@@ -38,35 +42,49 @@ def TrainingLoop(dataloader, model, loss_function, optimizer, device):
         optimizer.step()
 
         loss, current = loss.item(), batch * len(image)
-        training_loss += loss
-        if batch % 100 == 0:
-            print(f'Loss: {loss:>7f} [{current:>5d}/{size:>5d}]')
+        train_acc += correct.item()
+        train_loss += loss
+        if batch % 10 == 0:
+            print(f'Loss: {loss:>7f} Acc: {(correct/batch_size)*100:>0.1f}% [{current:>5d}/{size:>5d}]')
 
-    print(f'Acc: {(correct/size) * 100:>0.1f}%')
-    TRAIN_LOSS.append(training_loss/num_batches)
-    TRAIN_ACC.append((correct/size) * 100)
+    train_loss /= num_batches
+    train_acc /= size
 
-def ValidationLoop(dataloader, model, loss_fn, p_c, p_r, device):
+    print(f'Avg Loss: {loss:>7f} Avg Acc: {(train_acc) * 100:>0.1f}%')
+    
+    TRAIN_ACC.append(train_acc* 100)
+    TRAIN_LOSS.append(train_loss)
+    
+    return train_loss
+
+def ValidationLoop(dataloader, model, loss_function, p_c, p_r, device):
+    print("--- Validation Loop ---")
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
-    validation_loss, correct = 0, 0
+    batch_size = dataloader.batch_size
+    val_loss, val_acc, correct = 0, 0, 0
     y_true, y_pred = list(), list()
     
     with torch.no_grad():
-        for image, label in dataloader:
+        for batch, (image, label) in enumerate(dataloader):
             image, label = image.to(device), label.to(device)
             pred = model(image)
-            validation_loss += loss_fn(pred, label).item()
+            loss = loss_function(pred, label)
+            correct = (pred.argmax(1) == label).type(torch.float).sum()
+
             y_true.extend(label.cpu())
             y_pred.extend(pred.argmax(1).cpu())
-            correct += (pred.argmax(1) == label).type(torch.float).sum().item()
 
-    validation_loss /= num_batches
-    correct /= size
+            loss, current = loss.item(), batch * len(image)
+            val_acc += correct.item()
+            val_loss += loss
+            if batch % 10 == 0:
+                print(f'Loss: {loss:>7f} Acc: {(correct/batch_size)*100:>0.1f}% [{current:>5d}/{size:>5d}]')
 
-    print("--- Validation Error ---\n" +
-    f"Accuracy  : {(100*correct):>0.1f}% \n" +
-    f"Val loss  : {validation_loss:>8f} \n")
+    val_loss /= num_batches
+    val_acc /= size
+
+    print(f'Avg Loss: {val_loss:>7f} Avg Acc: {(val_acc)*100:>0.1f}%')
 
     if p_c:
         print("\n --- Confusion Matrix ---")
@@ -76,8 +94,10 @@ def ValidationLoop(dataloader, model, loss_fn, p_c, p_r, device):
         print("\n --- Classification Report ---")
         print(metrics.classification_report(y_true, y_pred, zero_division=True))
 
-    VAL_ACC.append(100*correct)
-    VAL_LOSS.append(validation_loss)
+    VAL_ACC.append(val_acc*100)
+    VAL_LOSS.append(val_loss)
+
+    return val_loss
 
 def LoadDataset(device, batch_size):
     # Load datasets
@@ -130,39 +150,40 @@ def SaveModel(model, name, epochs):
     torch.save(model.state_dict(), path)
     print('Model saved as ' + path)
 
-    stats = {
-        "epochs": epochs,
-        "train acc": TRAIN_ACC[epochs - 1],
-        "train loss": TRAIN_LOSS[epochs - 1],
-        "val acc ": VAL_ACC[epochs - 1],
-        "val loss": VAL_LOSS[epochs - 1]
-    }
+    # stats = {
+    #     "epochs": epochs,
+    #     "train acc": TRAIN_ACC[epochs - 1],
+    #     "train loss": TRAIN_LOSS[epochs - 1],
+    #     "val acc ": VAL_ACC[epochs - 1],
+    #     "val loss": VAL_LOSS[epochs - 1]
+    # }
 
-    with open('MachineLearning/NeuralNetwork/models/models.json', 'r') as infile:
-        json_object = json.load(infile)
+    # with open('MachineLearning/NeuralNetwork/models/models.json', 'r') as infile:
+    #     json_object = json.load(infile)
 
-    found = False
-    for model in json_object['models']:
-        if(model['name'] == name):
-            model['stats'] = stats
-            found = True
-            break
+    # found = False
+    # for model in json_object['models']:
+    #     if(model['name'] == name):
+    #         model['stats'] = stats
+    #         found = True
+    #         break
         
-    if not found:
-        json_object['models'].append(
-            {
-                'name': name, 
-                'stats': stats
-            })
+    # if not found:
+    #     json_object['models'].append(
+    #         {
+    #             'name': name, 
+    #             'stats': stats
+    #         })
         
-    with open('MachineLearning/NeuralNetwork/models/models.json', 'w') as outfile:
-        json.dump(json_object, outfile, indent=2)
+    # with open('MachineLearning/NeuralNetwork/models/models.json', 'w') as outfile:
+    #     json.dump(json_object, outfile, indent=2)
 
 def main(argv):
     # Hyperparameters
-    learning_rate = 0.01
+    learning_rate = 0.0005
     batch_size = 64
     num_epochs = 20
+    stopping_point = 0.01
 
     model_name = 'default'
     print_confusion_matrix = False
@@ -222,9 +243,15 @@ def main(argv):
 
     time_start = time.time()
     for epoch in range(num_epochs):
-        print(f'Epoch {epoch + 1}/{num_epochs}\n---------------------')
-        TrainingLoop(train_loader, model, loss, optimizer, device)
-        ValidationLoop(validation_loader, model, loss, print_confusion_matrix, print_classification_report, device)
+        print(f'\n Epoch {epoch + 1}/{num_epochs}\n---------------------')
+        running_train_loss = TrainingLoop(train_loader, model, loss, optimizer, device)
+        running_val_loss = ValidationLoop(validation_loader, model, loss, print_confusion_matrix, print_classification_report, device)
+
+        if running_train_loss <= stopping_point and stopping_point != -1:
+            num_epochs = epoch + 1
+            print(f'Early stopping at {epoch + 1} epochs')
+            break
+
 
     print(f'Elapsed time: {time.time() - time_start:>0.2f} seconds')
 

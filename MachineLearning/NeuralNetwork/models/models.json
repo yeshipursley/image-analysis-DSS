@@ -3,12 +3,25 @@
     {
       "name": "default",
       "stats": {
-        "epochs": 5,
-        "train acc": 96.26436781609196,
-        "train loss": 0.13520964175801387,
-        "val acc ": 94.46808510638299,
-        "val loss": 0.209559370453159
+        "epochs": 20,
+        "train acc": 98.61814831874712,
+        "train loss": 0.03854458340827156,
+        "val acc ": 92.34972677595628,
+        "val loss": 0.4023408475849364
       }
-    }
-  ]
-}
+    },
+    {
+      "name": "on_tabita_dataset",
+      "stats": {
+        "epochs": 20,
+        "train acc": 98.56665074056379,
+        "train loss": 0.04232803691235004,
+        "val acc ": 94.17293233082707,
+        "val loss": 0.24801010369426674
+      }
+    },
+    {
+      "name": "on_merged_dataset",
+      "stats": {
+        "epochs": 2,
+        "train acc": 

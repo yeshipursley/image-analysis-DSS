@@ -89,6 +89,7 @@ def main(argv):
     # default values
     folder_path = ''
     whitelist = list()
+    limit = 0
 
     try:
         opts, args = getopt.getopt(argv,"hd:l:", ["whitelist=", "limit="])
