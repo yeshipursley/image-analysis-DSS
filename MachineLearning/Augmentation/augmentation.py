@@ -11,7 +11,7 @@ def crop(image, w, h):
 
     return image[int(y):int(y+h), int(x):int(x+w)]
 
-folder_path = "MachineLearning/NeuralNetwork/datasets/test"
+folder_path = "MachineLearning/NeuralNetwork/datasets/images"
 
 for subdir, dirs, files in os.walk(folder_path):
     if len(files) <= 0:
@@ -45,14 +45,14 @@ for subdir, dirs, files in os.walk(folder_path):
             erosion = (255 - erosion)
             dilation = (255 - dilation)
 
-            #plt.subplot(1,3,1), plt.title("Image"), plt.imshow(img_rotation)
-            #plt.subplot(1,3,2), plt.title("Erosion"), plt.imshow(erosion)
-            #plt.subplot(1,3,3), plt.title("Dilation"), plt.imshow(dilation)
-            #plt.show()
+            plt.subplot(1,3,1), plt.title("Image"), plt.imshow(img_rotation)
+            plt.subplot(1,3,2), plt.title("Erosion"), plt.imshow(erosion)
+            plt.subplot(1,3,3), plt.title("Dilation"), plt.imshow(dilation)
+            plt.show()
 
-            cv2.imwrite('MachineLearning/Augmentation/augmented_output/' + file[:-4] + '_r.png', img_rotation)
-            cv2.imwrite('MachineLearning/Augmentation/augmented_output/' + file[:-4] + '_e.png', erosion)
-            cv2.imwrite('MachineLearning/Augmentation/augmented_output/' + file[:-4] + '_d.png', dilation)
+            #cv2.imwrite('MachineLearning/Augmentation/augmented_output/' + file[:-4] + '_r.png', img_rotation)
+            #cv2.imwrite('MachineLearning/Augmentation/augmented_output/' + file[:-4] + '_e.png', erosion)
+            #cv2.imwrite('MachineLearning/Augmentation/augmented_output/' + file[:-4] + '_d.png', dilation)
 
     
     

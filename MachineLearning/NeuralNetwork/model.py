@@ -33,21 +33,4 @@ class Convolutional(nn.Module):
 # https://towardsdatascience.com/implementing-yann-lecuns-lenet-5-in-pytorch-5e05a0911320
 # https://pytorch.org/tutorials/beginner/blitz/neural_networks_tutorial.html#sphx-glr-beginner-blitz-neural-networks-tutorial-py
 
-# class Linear(nn.Module):
-#     def __init__(self):
-#         super(Linear, self).__init__()
-#         self.flatten = nn.Flatten()
-#         # Layers
-#         self.fc1 = nn.Linear(64*64, 256)
-#         self.fc2 = nn.Linear(256, 128)
-#         self.fc3 = nn.Linear(128, CLASSES_COUNT)
-#         self.dropout = nn.Dropout(0.5)
-
-#     def forward(self, x):
-#         x = self.flatten(x)
-#         x = self.fc1(x)
-#         x = self.dropout(x)
-#         x = self.fc2(torch.relu(x))
-#         x = self.dropout(x)
-#         x = self.fc3(torch.sigmoid(x))
-#         return x
+# 
