@@ -1,58 +1,65 @@
-import cv2, os
+import cv2, os, random, re
+from matplotlib.style import available
 import numpy as np
 import matplotlib.pyplot as plt
+from torch import rand
 
-from sklearn.feature_extraction import img_to_graph
+def main():
+    max_files = 350
+    folder_path = "raw_data/tabita_dataset"
 
-def crop(image, w, h):
-    center_x, center_y = image.shape[0] / 2, image.shape[1] / 2
-    x = center_x - w/2
-    y = center_y - h/2
+    transformations = [rotate, morphological, shear]
+    for subdir, dirs, files in os.walk(folder_path):
+        if len(files) <= 0:
+            continue
 
-    return image[int(y):int(y+h), int(x):int(x+w)]
+        label = re.split(r'\\', subdir)[1]
 
-folder_path = "MachineLearning/NeuralNetwork/datasets/images"
+        total_num_files = len(files)
+        while total_num_files < max_files:
+            # pick random image
+            r_i = random.randrange(0, len(files))
+            image = cv2.imread(subdir+'/'+files[r_i])
+            og_image = image
+            image = (255-image)
+        
+            # to random transformations on that image
+            transform_num = random.randrange(1, len(transformations))
+            for i in range(transform_num):
+                image = transformations[random.randrange(0, len(transformations))](image)
+            
+            image = (255-image)
 
-for subdir, dirs, files in os.walk(folder_path):
-    if len(files) <= 0:
-        continue
+            # save image
+            path = subdir + '/' + label + str(total_num_files) + '.png'
+            print(f'Saving to: {path}')
+            cv2.imwrite(path, image)
+            total_num_files += 1
 
-    for i, file in enumerate(files):
-        image = cv2.imread(f'{subdir}\{file}')
-        image = (255-image) # Invert
-        image_size = image.shape # Get size
-        image = cv2.copyMakeBorder(image, 20, 20, 20, 20, cv2.BORDER_CONSTANT) # Add padding
- 
-        # Rotation transform
-        num_rows, num_cols = image.shape[:2]
-        for x in [-1, 0, 1]:
-            # Rotation
-            rotation_angle = 15 * x
-            img_rotation = cv2.warpAffine(image, cv2.getRotationMatrix2D((num_cols/2, num_rows/2), rotation_angle, 0.6), (num_cols, num_rows))
+def rotate(image):
+    angle = 15
+    image_center = tuple(np.array(image.shape[1::-1]) / 2)
+    rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+    return cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_NEAREST)
 
-            # Morpho stufg
-            kernel = np.ones((2,2),np.uint8)
-            erosion = cv2.erode(img_rotation, kernel, iterations = 1)
-            dilation = cv2.dilate(img_rotation, kernel, iterations= 1)
+def morphological(image):
+    kernel = np.ones((3,3), np.uint8)
+    if bool(random.getrandbits(1)):
+        return cv2.erode(image, kernel)
+    else:
+        return cv2.dilate(image, kernel)
 
-            # Crop images
-            img_rotation = crop(img_rotation, image_size[0], image_size[1])
-            erosion = crop(erosion, image_size[0], image_size[1])
-            dilation = crop(dilation, image_size[0], image_size[1])
+def skew(image):
+    # not sure what operations to do here
+    print("Skewing image")
 
-            # Invert back
-            img_rotation = (255 - img_rotation)
-            erosion = (255 - erosion)
-            dilation = (255 - dilation)
+def shear(image):
+    W, H, _ = image.shape
+    M2 = np.float32([[1, 0, 0], [0.2, 1, 0]])
+    M2[0,2] = -M2[0,1] * W/2
+    M2[1,2] = -M2[1,0] * H/2
+    return cv2.warpAffine(image, M2, image.shape[1::-1])
 
-            plt.subplot(1,3,1), plt.title("Image"), plt.imshow(img_rotation)
-            plt.subplot(1,3,2), plt.title("Erosion"), plt.imshow(erosion)
-            plt.subplot(1,3,3), plt.title("Dilation"), plt.imshow(dilation)
-            plt.show()
 
-            #cv2.imwrite('MachineLearning/Augmentation/augmented_output/' + file[:-4] + '_r.png', img_rotation)
-            #cv2.imwrite('MachineLearning/Augmentation/augmented_output/' + file[:-4] + '_e.png', erosion)
-            #cv2.imwrite('MachineLearning/Augmentation/augmented_output/' + file[:-4] + '_d.png', dilation)
-
-    
-    
+if __name__ == "__main__":
+    main()

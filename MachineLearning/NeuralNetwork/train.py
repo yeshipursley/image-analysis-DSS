@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
+import torchvision.datasets as datasets
 
 import matplotlib.pyplot as plt
 import sys, getopt, os, time
@@ -31,7 +32,6 @@ def TrainingLoop(dataloader, model, loss_function, optimizer, device):
         loss = loss_function(pred, label)
         correct = (pred.argmax(1) == label).sum()
         
-
         # Backpropagation
         optimizer.zero_grad()
         loss.backward()
@@ -96,7 +96,7 @@ def ValidationLoop(dataloader, model, loss_function, p_c, p_r, device):
     return val_loss
 
 def LoadDataset(device, batch_size):
-    dataset = "datasets_binarized"
+    dataset = "datasets"
     
     torch.set_printoptions(profile="full")
     transform = transforms.Compose([
@@ -217,12 +217,11 @@ def main(argv):
     model = Convolutional().to(device)
     model.train()
 
-    # Weights
-    #weights = [228, 104, 19, 74, 251, 106, 9, 50, 16, 137, 64, 104, 186, 66, 12, 50, 33, 28, 28, 78, 208, 48]
-    #noramlWeights = [1 - (x/sum(weights)) for x in weights]
-    #noramlWeights = torch.FloatTensor(noramlWeights).to(device)
-
     # Optimizer & Loss
+    #raw = [515, 198, 113, 154, 594, 239, 194, 194, 77, 151, 365, 359, 143, 40, 242, 107, 217, 152, 337, 227, 424, 207]
+    #norm = [1 - (float(i)/max(raw)) for i in raw]
+    #class_weights = torch.FloatTensor(norm).to(device)
+
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss = nn.CrossEntropyLoss()
 

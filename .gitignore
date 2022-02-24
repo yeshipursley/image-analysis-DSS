@@ -1,6 +1,8 @@
 **/MachineLearning/NeuralNetwork/datasets_binarized
 **/MachineLearning/NeuralNetwork/datasets_nonbinarized
 **/MachineLearning/GenerativeNetwork/datasets
+**/MachineLearning/NeuralNetwork/datasets
+**/MachineLearning/SpecializedNetwork/datasets
 **/MachineLearning/NeuralNetwork/__pycache__
 **/raw_data
 **/venv
