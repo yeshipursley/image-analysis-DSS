@@ -3,12 +3,17 @@ import pandas as pd
 from PIL import Image
 from torch.utils.data import Dataset
 
+import os
+
 class Qlsa(Dataset):
-    def __init__(self, annotations_file, img_dir, transform=None, target_transform=None):
-        self.img_labels = pd.read_csv(annotations_file)
-        self.img_dir = img_dir
+    def __init__(self, dataset:str, train:bool, transform=None):
+        if train:
+            self.img_labels = pd.read_csv(os.path.dirname(__file__) + '\\datasets\\' + dataset + '\\train.csv')
+        else:
+            self.img_labels = pd.read_csv(os.path.dirname(__file__) + '\\datasets\\' + dataset + '\\test.csv')
+        self.img_dir = os.path.dirname(__file__) + '\\datasets\\' + dataset + '\\images'
         self.transform = transform
-        self.target_transform = target_transform
+        self.target_transform = None
 
     def __len__(self):
         return len(self.img_labels)

@@ -8,12 +8,8 @@ import sys, getopt
 
 from sklearn.svm import LinearSVR
 
+dirname = os.path.dirname(__file__)
 CLASSES = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
-
-MIXED = ['SHIN', 'QOF', 'ALEF', 'TET', 'GIMEL']
-HORSESHOE = ['HE', 'MEM', 'SAMEKH', 'TAV', 'HET']
-LINES =  ['VAV', 'ZAYIN', 'YOD', 'NUN', 'LAMED', 'PE']
-FOURS = ['RESH', 'DALET', 'BET', 'KAF', 'TSADI', 'AYIN']
 
 def ConvertImage(image):
     ## Create empty bigger image   
@@ -34,7 +30,7 @@ def ConvertImage(image):
 
     return new_image.resize((32,32), resample=Image.NEAREST)
 
-def Extract(folder_path):
+def Extract(folder_path, dataset_name):
     rows = [list() for x in range(22)]
     
     # for each subdirectory in folder
@@ -57,7 +53,7 @@ def Extract(folder_path):
             new_name = f'{label}_{i}.png'
 
             # Save stuff
-            new_image.save("MachineLearning/NeuralNetwork/datasets/images/" + new_name)
+            new_image.save(dirname + '\\NeuralNetwork' + "\\datasets\\"+dataset_name+"\\images\\" + new_name)
             index = CLASSES.index(label.upper())
             # if label in FOURS:
             #     index = FOURS.index(label.upper())
@@ -77,17 +73,17 @@ def Extract(folder_path):
         
     return rows
 
-def WriteCSV(rows, limit, whitelist):
-    if not os.path.isfile('MachineLearning/NeuralNetwork/datasets/test.csv'):
-        f = open('MachineLearning/NeuralNetwork/datasets/test.csv', 'x')
+def WriteCSV(name, rows, limit, whitelist):
+    if not os.path.isfile(dirname + '\\NeuralNetwork' + '\\datasets\\'+name+'\\test.csv'):
+        f = open(dirname + '\\NeuralNetwork' + '\\datasets\\'+name+'\\test.csv', 'x')
         f.close()
 
-    if not os.path.isfile('MachineLearning/NeuralNetwork/datasets/train.csv'):
-        f = open('MachineLearning/NeuralNetwork/datasets/train.csv', 'x')
+    if not os.path.isfile(dirname + '\\NeuralNetwork' + '\\datasets\\'+name+'\\train.csv'):
+        f = open(dirname + '\\NeuralNetwork' + '\\datasets\\'+name+'\\train.csv', 'x')
         f.close()
 
-    if not os.path.isfile('MachineLearning/NeuralNetwork/datasets/overview.csv'):
-        f = open('MachineLearning/NeuralNetwork/datasets/overview.csv', 'x')
+    if not os.path.isfile(dirname + '\\NeuralNetwork' + '\\datasets\\'+name+'\\overview.csv'):
+        f = open(dirname + '\\NeuralNetwork' + '\\datasets\\'+name+'\\overview.csv', 'x')
         f.close()
 
     for row in rows:
@@ -103,15 +99,15 @@ def WriteCSV(rows, limit, whitelist):
         l = int(len(row) * 0.8)
         train, test = row[:l], row[l:]
 
-        with open('MachineLearning/NeuralNetwork/datasets/overview.csv', 'a') as csvfile:
+        with open(dirname + '\\NeuralNetwork' + '\\datasets\\'+name+'\\overview.csv', 'a') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow([label, str(len(row))])
 
-        with open('MachineLearning/NeuralNetwork/datasets/test.csv', 'a') as csvfile:
+        with open(dirname + '\\NeuralNetwork' + '\\datasets\\'+name+'\\test.csv', 'a') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerows(test)
         
-        with open('MachineLearning/NeuralNetwork/datasets/train.csv', 'a') as csvfile:
+        with open(dirname + '\\NeuralNetwork' + '\\datasets\\'+name+'\\train.csv', 'a') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerows(train)
 
@@ -120,9 +116,10 @@ def main(argv):
     folder_path = ''
     whitelist = list()
     limit = 0
+    name = 'default'
 
     try:
-        opts, args = getopt.getopt(argv,"hd:l:", ["whitelist=", "limit="])
+        opts, args = getopt.getopt(argv,"hd:l:n:", ["whitelist=", "limit=", "name="])
     except:
         # ERROR
         print("Error")
@@ -134,6 +131,8 @@ def main(argv):
             sys.exit()
         elif opt in ("-d"):
             folder_path = arg
+        elif opt in ("-n", "--name"):
+            name = arg
         elif opt in ("--whitelist"):
             whitelist = arg.split(',')
         elif opt in ("--limit", '-l'):
@@ -144,16 +143,19 @@ def main(argv):
         exit(2)
 
     # Check if directory exists
-    if not os.path.isdir('MachineLearning/NeuralNetwork/datasets'):
-            os.mkdir('MachineLearning/NeuralNetwork/datasets')
+    if not os.path.isdir(dirname + '\\NeuralNetwork' + '\\datasets'):
+            os.mkdir(dirname + '\\NeuralNetwork' + '\\datasets')
+
+    if not os.path.isdir(dirname + '\\NeuralNetwork' + '\\datasets\\' + name):
+            os.mkdir(dirname + '\\NeuralNetwork' + '\\datasets\\' + name)
 
     # Check if directory exists
-    if not os.path.isdir('MachineLearning/NeuralNetwork/datasets/images'):
-            os.mkdir('MachineLearning/NeuralNetwork/datasets/images')
+    if not os.path.isdir(dirname + '\\NeuralNetwork' + '\\datasets\\' + name +'\\images'):
+            os.mkdir(dirname + '\\NeuralNetwork' + '\\datasets\\' + name +'\\images')
 
     # Extract and Write to csv files
-    rows = Extract(folder_path)
-    WriteCSV(rows, limit, whitelist)
+    rows = Extract(folder_path, name)
+    WriteCSV(name, rows, limit, whitelist)
 
     print("Finished.")
 

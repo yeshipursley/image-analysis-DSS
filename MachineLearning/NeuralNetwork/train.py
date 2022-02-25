@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
-import torchvision.datasets as datasets
 
 import matplotlib.pyplot as plt
 import sys, getopt, os, time
@@ -16,6 +15,50 @@ TRAIN_LOSS = list()
 TRAIN_ACC = list()
 VAL_ACC = list()
 VAL_LOSS = list()
+
+dirname = os.path.dirname(__file__)
+
+def main(argv):
+    # Parameters
+    learning_rate = 0.0005
+    batch_size = 64
+    model_name, pcm, pcr, device, num_epochs, stopping_point = GetParameters(argv)
+
+    # Load Dataset
+    validation_loader, train_loader = LoadDataset(device, batch_size)
+
+    # Create model
+    model = Convolutional().to(device)
+    model.train()
+
+    # Class Weights
+    #raw = [515, 198, 113, 154, 594, 239, 194, 194, 77, 151, 365, 359, 143, 40, 242, 107, 217, 152, 337, 227, 424, 207]
+    #norm = [1 - (float(i)/max(raw)) for i in raw]
+    #class_weights = torch.FloatTensor(norm).to(device)
+
+    # Optimizer & Loss
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    loss = nn.CrossEntropyLoss()
+
+    # Training and Validation Loop
+    time_start = time.time()
+    for epoch in range(num_epochs):
+        print(f'\n Epoch {epoch + 1}/{num_epochs}\n---------------------')
+        running_train_loss = TrainingLoop(train_loader, model, loss, optimizer, device)
+        running_val_loss = ValidationLoop(validation_loader, model, loss, pcm, pcr, device)
+
+        # If using callback function
+        if running_train_loss <= stopping_point and stopping_point != -1:
+            num_epochs = epoch + 1
+            print(f'Early stopping at {epoch + 1} epochs')
+            break
+    print(f'Elapsed time: {time.time() - time_start:>0.2f} seconds')
+
+    # Save model
+    SaveModel(model, model_name, num_epochs)
+
+    # Plot errors
+    PlotGraph(num_epochs)
 
 def TrainingLoop(dataloader, model, loss_function, optimizer, device):
     print("--- Training Loop ---")
@@ -96,18 +139,14 @@ def ValidationLoop(dataloader, model, loss_function, p_c, p_r, device):
     return val_loss
 
 def LoadDataset(device, batch_size):
-    dataset = "datasets"
-    
-    torch.set_printoptions(profile="full")
     transform = transforms.Compose([
-        transforms.RandomInvert(1),
         transforms.ToTensor()
         ]
     )
     
     # Load datasets
-    train_set = Qlsa('MachineLearning/NeuralNetwork/' + dataset + '/train.csv', 'MachineLearning/NeuralNetwork/' + dataset + '/images', transform=transform)
-    validation_set = Qlsa('MachineLearning/NeuralNetwork/' + dataset + '/test.csv', 'MachineLearning/NeuralNetwork/' + dataset + '/images', transform=transform)
+    train_set = Qlsa(dataset='default', train=True, transform=transform)
+    validation_set = Qlsa(dataset='default', train=False, transform=transform)
 
     # Create data loaders
     validation_loader = DataLoader(validation_set, batch_size=batch_size, shuffle=True)
@@ -131,7 +170,7 @@ def PlotGraph(num_epochs):
     plt.ylabel('Accuracy')
     plt.ylim([0,110])
     plt.xlabel('Epochs')
-    plt.xticks(np.arange(0, num_epochs+1, 1.0 if num_epochs < 50 else 10))
+    plt.xticks(np.arange(0, num_epochs, 1.0 if num_epochs < 50 else 10))
     plt.xlim(xmin=0)
     plt.plot(VAL_ACC, label = "Validation")
     plt.plot(TRAIN_ACC, label = "Training")
@@ -141,7 +180,7 @@ def PlotGraph(num_epochs):
     plt.subplot(2,1,2)
     plt.ylabel('Loss')
     plt.xlabel('Epochs')
-    plt.xticks(np.arange(0, num_epochs+1, 1.0 if num_epochs < 50 else 10))
+    plt.xticks(np.arange(0, num_epochs, 1.0 if num_epochs < 50 else 10))
     plt.xlim(xmin=0)
     plt.plot(VAL_LOSS, label = "Validation")
     plt.plot(TRAIN_LOSS, label = "Training")
@@ -149,28 +188,24 @@ def PlotGraph(num_epochs):
 
     plt.show()
 
-def SaveModel(model, name, log):
-    if not os.path.isdir('MachineLearning/NeuralNetwork/models/' + name):
-        os.mkdir('MachineLearning/NeuralNetwork/models/' + name)
+def SaveModel(model, name):
+    # Check if directory exists
+    if not os.path.isdir(dirname + '\\models'):
+            os.mkdir(dirname + '\\models')
+            
+    if not os.path.isdir(dirname+'\\models\\'+name):
+        os.mkdir(dirname+'\\'+name)
 
-    path = 'MachineLearning/NeuralNetwork/models/' + name + '/' + name + '.model'
+    path = dirname+ '\\models\\' + name + '\\' + name + '.model'
     torch.save(model.state_dict(), path)
     print('Model saved as ' + path)
 
-    # with open(f'MachineLearning/NeuralNetwork/models/{name}/{name}.txt', 'w+') as logfile:
-    #     logfile.write(log)
-
-
-def main(argv):
-    # Hyperparameters
-    learning_rate = 0.0005
-    batch_size = 64
+def GetParameters(argv):
     num_epochs = 20
     stopping_point = -1
-
     model_name = 'default'
-    print_confusion_matrix = False
-    print_classification_report = False
+    pcm = False
+    pcr = False
     device = torch.device("cpu")
 
     try:
@@ -199,9 +234,9 @@ def main(argv):
                 print("argument needs to be a number")
                 sys.exit(2)
         elif opt in ("--confusion"):
-            print_confusion_matrix = True
+            pcm = True
         elif opt in ("--report"):
-            print_classification_report = True
+            pcr = True
         elif opt in ("--earlystop"):
             stopping_point = int(arg)
         elif opt in ("--gpu"):
@@ -210,44 +245,8 @@ def main(argv):
             else:
                 print('GPU not available, using CPU')
                 device = torch.device("cpu")
-
-    validation_loader, train_loader = LoadDataset(device, batch_size)
-
-    # Create model
-    model = Convolutional().to(device)
-    model.train()
-
-    # Optimizer & Loss
-    #raw = [515, 198, 113, 154, 594, 239, 194, 194, 77, 151, 365, 359, 143, 40, 242, 107, 217, 152, 337, 227, 424, 207]
-    #norm = [1 - (float(i)/max(raw)) for i in raw]
-    #class_weights = torch.FloatTensor(norm).to(device)
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    loss = nn.CrossEntropyLoss()
-
-    time_start = time.time()
-    for epoch in range(num_epochs):
-        print(f'\n Epoch {epoch + 1}/{num_epochs}\n---------------------')
-        running_train_loss = TrainingLoop(train_loader, model, loss, optimizer, device)
-        running_val_loss = ValidationLoop(validation_loader, model, loss, print_confusion_matrix, print_classification_report, device)
-
-        if running_train_loss <= stopping_point and stopping_point != -1:
-            num_epochs = epoch + 1
-            print(f'Early stopping at {epoch + 1} epochs')
-            break
-
-
-    print(f'Elapsed time: {time.time() - time_start:>0.2f} seconds')
-
-    # Check if directory exists
-    if not os.path.isdir('MachineLearning/NeuralNetwork/models'):
-            os.mkdir('MachineLearning/NeuralNetwork/models')
-
-    # Save model
-    SaveModel(model, model_name, num_epochs)
-
-    # Plot errors
-    PlotGraph(num_epochs)
+    
+    return (model_name, pcm, pcr, device, num_epochs, stopping_point)
 
 if __name__ == "__main__":
    main(sys.argv[1:])
