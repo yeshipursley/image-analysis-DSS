@@ -22,7 +22,7 @@ def main(argv):
     # Parameters
     learning_rate = 0.0005
     batch_size = 64
-    model_name, pcm, pcr, device, num_epochs, stopping_point = GetParameters(argv)
+    model_name, device, num_epochs, stopping_point = GetParameters(argv)
 
     # Load Dataset
     validation_loader, train_loader = LoadDataset(device, batch_size)
@@ -40,28 +40,39 @@ def main(argv):
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss = nn.CrossEntropyLoss()
 
+    # Check if directory exists
+    if not os.path.isdir(dirname + '\\models'):
+        os.mkdir(dirname + '\\models')
+
+    if not os.path.isdir(dirname+'\\models\\'+model_name):
+        os.mkdir(dirname+'\\'+model_name)
+
     # Training and Validation Loop
     time_start = time.time()
-    for epoch in range(num_epochs):
-        print(f'\n Epoch {epoch + 1}/{num_epochs}\n---------------------')
-        running_train_loss = TrainingLoop(train_loader, model, loss, optimizer, device)
-        running_val_loss = ValidationLoop(validation_loader, model, loss, pcm, pcr, device)
+    with open(f'MachineLearning\\NeuralNetwork\\models\\{model_name}\\log.txt', 'a+') as logfile:
+        logfile.truncate(0)
+        for epoch in range(num_epochs):
+            print(f'Epoch {epoch + 1}/{num_epochs}')
+            logfile.write(f'\n Epoch {epoch + 1}/{num_epochs}\n-----------------------------------------------------------------\n')
+            running_train_loss = TrainingLoop(train_loader, model, loss, optimizer, device, logfile)
+            running_val_loss = ValidationLoop(validation_loader, model, loss, device, logfile)
 
-        # If using callback function
-        if running_train_loss <= stopping_point and stopping_point != -1:
-            num_epochs = epoch + 1
-            print(f'Early stopping at {epoch + 1} epochs')
-            break
+            # If using callback function
+            if running_train_loss <= stopping_point and stopping_point != -1:
+                num_epochs = epoch + 1
+                logfile.write(f'Early stopping at {epoch + 1} epochs')
+                break
+
     print(f'Elapsed time: {time.time() - time_start:>0.2f} seconds')
 
     # Save model
-    SaveModel(model, model_name, num_epochs)
+    SaveModel(model, model_name)
 
     # Plot errors
     PlotGraph(num_epochs)
 
-def TrainingLoop(dataloader, model, loss_function, optimizer, device):
-    print("--- Training Loop ---")
+def TrainingLoop(dataloader, model, loss_function, optimizer, device, logfile):
+    logfile.write("--- Training Loop --- \n")
     size = len(dataloader.dataset)
     batch_size = dataloader.batch_size
     num_batches = len(dataloader)
@@ -84,20 +95,20 @@ def TrainingLoop(dataloader, model, loss_function, optimizer, device):
         train_acc += correct.item()
         train_loss += loss
         if batch % 100 == 0:
-            print(f'Loss: {loss:>7f} Acc: {(correct/batch_size)*100:>0.1f}% [{current:>5d}/{size:>5d}]')
+            logfile.write(f'Loss: {loss:>7f}, Acc: {(correct/batch_size)*100:>0.1f}% [{current:>5d}/{size:>5d}] \n')
 
     train_loss /= num_batches
     train_acc /= size
 
-    print(f'\n Avg Loss: {loss:>7f} Avg Acc: {(train_acc) * 100:>0.1f}%')
+    logfile.write(f'Avg Loss: {loss:>7f}, Avg Acc: {(train_acc) * 100:>0.1f}% \n')
     
     TRAIN_ACC.append(train_acc* 100)
     TRAIN_LOSS.append(train_loss)
     
     return train_loss
 
-def ValidationLoop(dataloader, model, loss_function, p_c, p_r, device):
-    print("--- Validation Loop ---")
+def ValidationLoop(dataloader, model, loss_function, device, logfile):
+    logfile.write("\n --- Validation Loop --- \n ")
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
     batch_size = dataloader.batch_size
@@ -118,20 +129,18 @@ def ValidationLoop(dataloader, model, loss_function, p_c, p_r, device):
             val_acc += correct.item()
             val_loss += loss
             if batch % 100 == 0:
-                print(f'Loss: {loss:>7f} Acc: {(correct/batch_size)*100:>0.1f}% [{current:>5d}/{size:>5d}]')
+                logfile.write(f'Loss: {loss:>7f}, Acc: {(correct/batch_size)*100:>0.1f}% [{current:>5d}/{size:>5d}] \n')
 
     val_loss /= num_batches
     val_acc /= size
 
-    print(f'\n Avg Loss: {val_loss:>7f} Avg Acc: {(val_acc)*100:>0.1f}%')
+    logfile.write(f'Avg Loss: {val_loss:>7f}, Avg Acc: {(val_acc)*100:>0.1f}% \n')
 
-    if p_c:
-        print("\n --- Confusion Matrix ---")
-        print(metrics.confusion_matrix(y_true, y_pred))
+    logfile.write("\n --- Confusion Matrix --- \n")
+    logfile.write(np.array2string(metrics.confusion_matrix(y_true, y_pred)))
 
-    if p_r:
-        print("\n --- Classification Report ---")
-        print(metrics.classification_report(y_true, y_pred, zero_division=True))
+    logfile.write("\n\n --- Classification Report --- \n")
+    logfile.write(metrics.classification_report(y_true, y_pred, zero_division=True))
 
     VAL_ACC.append(val_acc*100)
     VAL_LOSS.append(val_loss)
@@ -189,13 +198,6 @@ def PlotGraph(num_epochs):
     plt.show()
 
 def SaveModel(model, name):
-    # Check if directory exists
-    if not os.path.isdir(dirname + '\\models'):
-            os.mkdir(dirname + '\\models')
-            
-    if not os.path.isdir(dirname+'\\models\\'+name):
-        os.mkdir(dirname+'\\'+name)
-
     path = dirname+ '\\models\\' + name + '\\' + name + '.model'
     torch.save(model.state_dict(), path)
     print('Model saved as ' + path)
@@ -204,8 +206,6 @@ def GetParameters(argv):
     num_epochs = 20
     stopping_point = -1
     model_name = 'default'
-    pcm = False
-    pcr = False
     device = torch.device("cpu")
 
     try:
@@ -233,10 +233,6 @@ def GetParameters(argv):
             except:
                 print("argument needs to be a number")
                 sys.exit(2)
-        elif opt in ("--confusion"):
-            pcm = True
-        elif opt in ("--report"):
-            pcr = True
         elif opt in ("--earlystop"):
             stopping_point = int(arg)
         elif opt in ("--gpu"):
@@ -246,7 +242,7 @@ def GetParameters(argv):
                 print('GPU not available, using CPU')
                 device = torch.device("cpu")
     
-    return (model_name, pcm, pcr, device, num_epochs, stopping_point)
+    return (model_name, device, num_epochs, stopping_point)
 
 if __name__ == "__main__":
    main(sys.argv[1:])
