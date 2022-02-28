@@ -62,7 +62,8 @@ def main(argv):
                 num_epochs = epoch + 1
                 logfile.write(f'Early stopping at {epoch + 1} epochs')
                 break
-
+        logfile.close()
+    
     print(f'Elapsed time: {time.time() - time_start:>0.2f} seconds')
 
     # Save model
