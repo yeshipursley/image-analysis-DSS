@@ -9,7 +9,7 @@ import numpy as np
 from sklearn import metrics
 
 from dataset import Qlsa
-from model import Convolutional
+from model import Convolutional2
 
 TRAIN_LOSS = list()
 TRAIN_ACC = list()
@@ -28,7 +28,7 @@ def main(argv):
     validation_loader, train_loader = LoadDataset(device, batch_size)
 
     # Create model
-    model = Convolutional().to(device)
+    model = Convolutional2().to(device)
 
     # Class Weights
     #raw = [515, 198, 113, 154, 594, 239, 194, 194, 77, 151, 365, 359, 143, 40, 242, 107, 217, 152, 337, 227, 424, 207]
@@ -85,7 +85,6 @@ def TrainingLoop(dataloader, model, loss_function, optimizer, device, logfile):
     # Main loop
     for batch, (image, label) in enumerate(dataloader):
         image, label = image.to(device), label.to(device)
-        print(image.shape)
         # Compute prediction and loss
         pred = model(image)
         loss = loss_function(pred, label)

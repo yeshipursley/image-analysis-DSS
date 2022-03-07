@@ -12,8 +12,14 @@ class Classifier():
         self.model = Convolutional()
         self.model.load_state_dict(torch.load(model))
         self.model.eval()
+
+        # Setup classes
+        self._classes = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
     
     def Classify(self, images):
+        # Ensure that the array is a numpy array
+        images = np.asarray(images)
+
         # Convert the numpy arrays into tensors
         images = torch.from_numpy(images).float()
     
@@ -21,15 +27,17 @@ class Classifier():
         images = images.unsqueeze(1)
 
         # Predict
-        predictions = self.model(images)
+        confidenseValues = self.model(images)
 
         # Convert the predictions to a numpy array
-        predictions = predictions.detach().numpy()
+        confidenseValues = confidenseValues.detach().numpy()
+        # Get the highest confidense value
+        predictions = list()
+        for confidenseValue in confidenseValues:
+            highestConfidense = np.argmax(confidenseValue)
+            predictions.append(self._classes[highestConfidense])
 
-        # Get the most confident prediction
-        topPrediction = np.argmax(predictions)
-
-        return topPrediction
+        return predictions
 
 # It is important that the model used is trained on the same structure as this one
 class Convolutional(nn.Module):
