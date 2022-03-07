@@ -1,4 +1,4 @@
-from model import Convolutional
+from model import Convolutional2
 import os
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -138,7 +138,7 @@ def main(argv):
 
     # Load model
     print("Loading model", model_path)
-    model = Convolutional()
+    model = Convolutional2()
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
