@@ -12,8 +12,26 @@ class Convolutional(nn.Module):
         self.fc2 = nn.Linear(256, 128)
         self.fc3 = nn.Linear(128, 22)
 
+        # Alternate Reprensentation
+        # self.convolutional = nn.Sequential(
+        #     nn.Conv2d(1, 6, 5), # 1 input image channel, 6 output channels, 5x5 square convolution
+        #     nn.ReLU(),
+        #     nn.MaxPool2d(2,2),
+        #     nn.Conv2d(6, 16, 5), # 6 input image channel, 16 output channels, 5x5 square convolution
+        #     nn.ReLU(),
+        #     nn.MaxPool2d(2,2)
+        # )
+        
+        # self.fullyconnected = nn.Sequential(
+        #     nn.Linear(16 * 5 * 5, 256),
+        #     nn.ReLU(),
+        #     nn.Linear(256, 128),
+        #     nn.ReLU(),
+        #     nn.Linear(128, 22)
+        # )
+
     def forward(self, x):
-        # First convolution and pooling
+         # First convolution and pooling
         x = F.relu(self.conv1(x))
         x = self.pool(x)
 

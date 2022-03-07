@@ -29,7 +29,6 @@ def main(argv):
 
     # Create model
     model = Convolutional().to(device)
-    model.train()
 
     # Class Weights
     #raw = [515, 198, 113, 154, 594, 239, 194, 194, 77, 151, 365, 359, 143, 40, 242, 107, 217, 152, 337, 227, 424, 207]
@@ -54,7 +53,11 @@ def main(argv):
         for epoch in range(num_epochs):
             print(f'Epoch {epoch + 1}/{num_epochs}')
             logfile.write(f'\n Epoch {epoch + 1}/{num_epochs}\n-----------------------------------------------------------------\n')
+            
+            model.train()
             running_train_loss = TrainingLoop(train_loader, model, loss, optimizer, device, logfile)
+            
+            model.eval()
             running_val_loss = ValidationLoop(validation_loader, model, loss, device, logfile)
 
             # If using callback function
@@ -82,6 +85,7 @@ def TrainingLoop(dataloader, model, loss_function, optimizer, device, logfile):
     # Main loop
     for batch, (image, label) in enumerate(dataloader):
         image, label = image.to(device), label.to(device)
+        print(image.shape)
         # Compute prediction and loss
         pred = model(image)
         loss = loss_function(pred, label)
@@ -150,6 +154,7 @@ def ValidationLoop(dataloader, model, loss_function, device, logfile):
 
 def LoadDataset(device, batch_size):
     transform = transforms.Compose([
+        transforms.RandomInvert(1),
         transforms.ToTensor()
         ]
     )

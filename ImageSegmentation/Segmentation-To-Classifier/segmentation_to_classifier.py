@@ -74,3 +74,5 @@ for b in boxes.splitlines():
 
 # Saves the image with all the rectangles
 print("Saving the img was successful:", cv2.imwrite('segImage.png', img))
+
+print(segmentedLetters)

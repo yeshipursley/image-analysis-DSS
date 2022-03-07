@@ -82,6 +82,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 
 # Load Data
 transform = transforms.Compose([
+        transforms.RandomInvert(1),
         transforms.Resize((32,32)),
         transforms.ToTensor(),
         transforms.Normalize([0.5], [0.5])
@@ -114,20 +115,31 @@ model_conv.load_state_dict(torch.load('mnist.model'))
 #model_conv = train_model(model_conv, criterion, optimizer_conv, scheduler=None, num_epochs=25) 
 #torch.save(model_conv.state_dict(), 'mnist.model')
 
-## Train secondary on our dataset
-# Freeze
+# Freeze the weights
 for param in model_conv.parameters():
     param.requires_grad = False
-model_conv.fc3 = nn.Linear(model_conv.fc3.in_features, 22)
 
-train = dataset.Qlsa(dataset='default', train=True, transform=transform)
-validate = dataset.Qlsa(dataset='default', train=False, transform=transform)
+# Replace the fully connected layers
+model_conv.fullyconnected = nn.Sequential(
+    nn.Linear(model_conv.fc1.in_features, model_conv.fc1.out_features)
+)
+model_conv.fc2 = nn.Sequential(
+    nn.Linear(model_conv.fc2.in_features, model_conv.fc2.out_features)
+)
+model_conv.fc3 = nn.Sequential(
+    nn.Linear(model_conv.fc3.in_features, 22)
+)
 
+# Load dataset
+dataset_name = 'merged_augmented'
+train = dataset.Qlsa(dataset=dataset_name, train=True, transform=transform)
+validate = dataset.Qlsa(dataset=dataset_name, train=False, transform=transform)
 dataloaders = {'train': DataLoader(train, batch_size, True), 'val': DataLoader(validate, batch_size, True)}
 dataset_sizes = {'train': len(dataloaders['train'].dataset),'val': len(dataloaders['val'].dataset)}
 
+# Loss and optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer_conv = torch.optim.Adam(model_conv.fc3.parameters(), lr=0.001)
+optimizer_conv = torch.optim.Adam(model_conv.parameters(), lr=0.01)
 
 # # Decay LR by a factor of 0.1 every 7 epochs
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=3, gamma=0.1)
