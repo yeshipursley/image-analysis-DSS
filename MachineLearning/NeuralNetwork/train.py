@@ -9,7 +9,7 @@ import numpy as np
 from sklearn import metrics
 
 from dataset import Qlsa
-from model import Convolutional2
+from model import Convolutional
 
 TRAIN_LOSS = list()
 TRAIN_ACC = list()
@@ -28,7 +28,7 @@ def main(argv):
     validation_loader, train_loader = LoadDataset(device, batch_size)
 
     # Create model
-    model = Convolutional2().to(device)
+    model = Convolutional().to(device)
 
     # Class Weights
     #raw = [515, 198, 113, 154, 594, 239, 194, 194, 77, 151, 365, 359, 143, 40, 242, 107, 217, 152, 337, 227, 424, 207]
@@ -158,8 +158,9 @@ def LoadDataset(device, batch_size):
     )
     
     # Load datasets
-    train_set = Qlsa(dataset='default', train=True, transform=transform)
-    validation_set = Qlsa(dataset='default', train=False, transform=transform)
+    d = 'new_method'
+    train_set = Qlsa(dataset=d, train=True, transform=transform)
+    validation_set = Qlsa(dataset=d, train=False, transform=transform)
 
     # Create data loaders
     validation_loader = DataLoader(validation_set, batch_size=batch_size, shuffle=True)

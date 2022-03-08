@@ -1,4 +1,4 @@
-from model import Convolutional2
+from model import Convolutional
 import os
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -53,6 +53,7 @@ def PrintResults(results, images, filenames):
     if not os.path.isdir('MachineLearning/NeuralNetwork/data/output'):
         os.mkdir('MachineLearning/NeuralNetwork/data/output')
 
+    correct = 0
     for i, result in enumerate(results):
         percentages = nnf.softmax(result, dim=0)
         result = result.detach().numpy()
@@ -73,36 +74,27 @@ def PrintResults(results, images, filenames):
         
 
         if label in filename.upper():
+            correct += 1
             print('\033[92m' + f'Perdicted that {filename} is {label} ({percentage:.1f}%) {"or" if len(additional_guesses) > 0 else ""} {" or ".join(additional_guesses)}' + '\033[0m')
         else:
             print('\033[91m' +  f'Perdicted that {filename} is {label} ({percentage:.1f}%) {"or" if len(additional_guesses) > 0 else ""} {" or ".join(additional_guesses)}' + '\033[0m')
+        
         
         output = Image.fromarray(images[i]).convert('L')
         
         output.save('MachineLearning/NeuralNetwork/data/output/' + str(i) + '-' + label + f'({percentage:.1f}%)' + '.png')
 
+    print(f'{correct} out of {len(results)} are correct ({correct/len(results)*100:<.1f}%)')
+
 def LoadImages(path):
     num_files = len(os.listdir(path))
-    (images, labels) = (np.zeros((num_files, 32, 32)), list()) # np array
+    image_size = 100
+    (images, labels) = (np.zeros((num_files, image_size, image_size)), list()) # np array
     for i, filename in enumerate(os.listdir(path)):
         image = Image.open(path+ "\\" + filename).convert('L') # Opens the file as a Pillow image
-        ## Create empty bigger image   
-        new_size = image.width if image.width > image.height else image.height    
-        new_image = Image.new(image.mode, (new_size,new_size), 255)
-        
-        ## Resize image if its bigger than the new image
-        if image.height > new_size:
-            r = image.height / image.width
-            image = image.resize((int(new_size/r),new_size), resample=Image.NEAREST)
-        elif image.width > new_size:
-            r = image.width / image.height
-            image = image.resize((new_size,(int(new_size/r))), resample=Image.NEAREST)
-
-        # Paste image in the middle of the emtpy image
-        x, y = int((new_size/2)) - int(image.width/2), int((new_size/2)) - int(image.height/2)  
+        new_image = Image.new(image.mode, (100, 100), 255)
+        x, y = int((100/2)) - int(image.width/2), int(100) - int(image.height) 
         new_image.paste(image, (x,y))
-
-        new_image = new_image.resize((32,32), resample=Image.NEAREST)
         np_image = np.array(new_image) # Converts the pil image into a numpy array
 
         # Reformat filename
@@ -138,7 +130,7 @@ def main(argv):
 
     # Load model
     print("Loading model", model_path)
-    model = Convolutional2()
+    model = Convolutional()
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
@@ -160,8 +152,8 @@ def main(argv):
     PrintResults(results, images, filenames)
 
     # Prints put all the inputs in a graph visualization
-    print("Graphs will be saved to the data/results folder")
-    DisplayResults(results, images, labels)
+    #print("Graphs will be saved to the data/results folder")
+    #DisplayResults(results, images, labels)
 
 if __name__ == "__main__":
    main(sys.argv[1:])
