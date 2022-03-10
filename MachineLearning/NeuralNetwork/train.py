@@ -9,7 +9,7 @@ import numpy as np
 from sklearn import metrics
 
 from dataset import Qlsa
-from model import Convolutional
+from model import Convolutional, AlexNet, LeNet
 
 TRAIN_LOSS = list()
 TRAIN_ACC = list()
@@ -44,12 +44,13 @@ def main(argv):
         os.mkdir(dirname + '\\models')
 
     if not os.path.isdir(dirname+'\\models\\'+model_name):
-        os.mkdir(dirname+'\\'+model_name)
+        os.mkdir(dirname+'\\models\\'+model_name)
 
     # Training and Validation Loop
     time_start = time.time()
     with open(f'MachineLearning\\NeuralNetwork\\models\\{model_name}\\log.txt', 'a+') as logfile:
         logfile.truncate(0)
+        logfile.write(str(model))
         for epoch in range(num_epochs):
             print(f'Epoch {epoch + 1}/{num_epochs}')
             logfile.write(f'\n Epoch {epoch + 1}/{num_epochs}\n-----------------------------------------------------------------\n')
@@ -153,15 +154,15 @@ def ValidationLoop(dataloader, model, loss_function, device, logfile):
 
 def LoadDataset(device, batch_size):
     transform = transforms.Compose([
-        transforms.ToTensor()
+        transforms.ToTensor(),
         ]
     )
     
     # Load datasets
-    d = 'new_method'
+    d = 'default+'
     train_set = Qlsa(dataset=d, train=True, transform=transform)
     validation_set = Qlsa(dataset=d, train=False, transform=transform)
-
+    
     # Create data loaders
     validation_loader = DataLoader(validation_set, batch_size=batch_size, shuffle=True)
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)

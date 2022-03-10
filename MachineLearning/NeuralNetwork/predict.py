@@ -6,15 +6,16 @@ import torch
 import torch.nn.functional as nnf
 import numpy as np
 import re
-import sys, getopt
+import sys, math
 
 CLASSES = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
+dirname = os.path.dirname(__file__)
 
 # Display of prediction is kinda broken right now
 def DisplayResults(results, images, labels):
     # check for results folder
-    if not os.path.isdir('MachineLearning/NeuralNetwork/data/results'):
-        os.mkdir('MachineLearning/NeuralNetwork/data/results')
+    if not os.path.isdir(dirname + '/data/results'):
+        os.mkdir(dirname + '/data/results')
 
     for i, result in enumerate(results):
         fig, ax = plt.subplots(1,2)
@@ -44,45 +45,44 @@ def DisplayResults(results, images, labels):
         graph_plot.set_yticklabels(CLASSES)
 
         fig.tight_layout()
-        fig.savefig('MachineLearning/NeuralNetwork/data/results/' + str(i) + '_' + labels[i] + '.png')
+        fig.savefig(dirname + '/data/results/' + str(i) + '_' + labels[i] + '.png')
 
     plt.show()
 
 def PrintResults(results, images, filenames):
     # check for output folder
-    if not os.path.isdir('MachineLearning/NeuralNetwork/data/output'):
-        os.mkdir('MachineLearning/NeuralNetwork/data/output')
+    if not os.path.isdir(dirname + '/data/output'):
+        os.mkdir(dirname + '/data/output')
 
     correct = 0
     for i, result in enumerate(results):
-        percentages = nnf.softmax(result, dim=0)
+        result = nnf.softmax(result, dim=0)
         result = result.detach().numpy()
-        top_guess = np.argmax(result)
 
+        prediction = result[np.argmax(result)]
         filename = filenames[i]
-        label = CLASSES[top_guess]
-        percentage = percentages[top_guess] * 100
+        label = CLASSES[np.argmax(result)]
 
         additional_guesses = list()
-        if percentage < 50:
-            threshold = percentages[top_guess] - (percentages[top_guess] * 0.5)
-            for p in percentages:
-                if  p >= threshold and p <= percentages[top_guess] and p != percentages[top_guess]:
-                    local_label = CLASSES[percentages.tolist().index(p)]
+        if prediction * 100 < 50:
+            threshold = prediction - (prediction * 0.5)
+            for p in result:
+                if  p >= threshold and p <= prediction and p != prediction:
+                    local_label = CLASSES[result.tolist().index(p)]
                     additional_guesses.append(f'{local_label} ({p * 100:.1f}%)')
         
         
 
         if label in filename.upper():
             correct += 1
-            print('\033[92m' + f'Perdicted that {filename} is {label} ({percentage:.1f}%) {"or" if len(additional_guesses) > 0 else ""} {" or ".join(additional_guesses)}' + '\033[0m')
+            print('\033[92m' + f'Perdicted that {filename} is {label} ({prediction*100:.1f}%) {"or" if len(additional_guesses) > 0 else ""} {" or ".join(additional_guesses)}' + '\033[0m')
         else:
-            print('\033[91m' +  f'Perdicted that {filename} is {label} ({percentage:.1f}%) {"or" if len(additional_guesses) > 0 else ""} {" or ".join(additional_guesses)}' + '\033[0m')
+            print('\033[91m' +  f'Perdicted that {filename} is {label} ({prediction*100:.1f}%) {"or" if len(additional_guesses) > 0 else ""} {" or ".join(additional_guesses)}' + '\033[0m')
         
         
         output = Image.fromarray(images[i]).convert('L')
         
-        output.save('MachineLearning/NeuralNetwork/data/output/' + str(i) + '-' + label + f'({percentage:.1f}%)' + '.png')
+        output.save(dirname + '/data/output/' + str(i) + '-' + label + f'({prediction*100:.1f}%)' + '.png')
 
     print(f'{correct} out of {len(results)} are correct ({correct/len(results)*100:<.1f}%)')
 
@@ -109,28 +109,15 @@ def LoadImages(path):
 
 def main(argv):
     # default values
-    input_path = 'MachineLearning/NeuralNetwork/data/input'
-    model_path = 'MachineLearning/NeuralNetwork/models/default/default.model'
+    input_path = dirname + '/data/input'
 
-    try:
-        opts, args = getopt.getopt(argv,"hi:m:", ["input=", "model="])
-    except:
-        # ERROR
-        print("Error")
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt == '-h':
-            # Help
-            print("Usage: python .\\predict.py -i <path of your input> -m <path of your trained model>")
-            sys.exit()
-        elif opt in ("-i"):
-            input_path = 'MachineLearning/NeuralNetwork/' + arg
-        elif opt in ("-m"):
-            model_path = 'MachineLearning/NeuralNetwork/' + arg
-
+    model_name = 'sigmoid+'
+    model_path = f'{dirname}/models/{model_name}/{model_name}.model'
+    
     # Load model
     print("Loading model", model_path)
     model = Convolutional()
+    print(model)
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
@@ -142,10 +129,10 @@ def main(argv):
     x = torch.from_numpy(images).float()
     results = model(x.unsqueeze(1))
     print("Finished predicting..")
-
+    
     # Check if there is a folder for data
     if not os.path.isdir('MachineLearning\\NeuralNetwork\\data'):
-        os.mkdir('MachineLearning/NeuralNetwork/data')
+        os.mkdir(dirname + '/data')
 
     # Prints out all inputs with the strongest prediction
     print("Labeled images will be saved to the data/results folder")

@@ -35,7 +35,6 @@ def Method2(image):
     x, y = int((100/2)) - int(image.width/2), int(100) - int(image.height) 
     new_image.paste(image, (x,y))
     return new_image
-    return new_image.resize((32,32), resample=Image.NEAREST)
 
 def ConvertImage(image):
     return Method2(image)
