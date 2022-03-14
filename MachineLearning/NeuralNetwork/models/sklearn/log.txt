@@ -1,0 +1,50 @@
+Convolutional(
+  (convolutional): Sequential(
+    (0): Conv2d(1, 6, kernel_size=(5, 5), stride=(1, 1))
+    (1): ReLU()
+    (2): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (3): Conv2d(6, 16, kernel_size=(5, 5), stride=(1, 1))
+    (4): ReLU()
+    (5): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+  )
+  (fullyconnected): Sequential(
+    (0): Linear(in_features=7744, out_features=256, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=256, out_features=128, bias=True)
+    (3): Sigmoid()
+    (4): Linear(in_features=128, out_features=22, bias=True)
+  )
+)
+ Epoch 1/1
+-----------------------------------------------------------------
+--- Training Loop --- 
+Loss: 3.181129, Acc: 6.2% [    0/ 7565] 
+Loss: 1.864555, Acc: 57.8% [ 6400/ 7565] 
+Avg Loss: 1.732296, Avg Acc: 32.6% 
+
+ --- Validation Loop --- 
+ Loss: 1.655001, Acc: 62.5% [    0/ 1915] 
+Avg Loss: 1.648947, Avg Acc: 61.8% 
+
+ --- Confusion Matrix --- 
+[[108   0   0   0  32   0   0   0  13   1   0   2   0   0   0   0   0   0   0   1   0]
+ [  7  16   0   0  14   3   0   0   3   0   0   9   0   0   1   0   0   0  15  12   0]
+ [ 19   0   0   0   0   0   1   0  24   0   1   0   0   0   0   0   0   0   0   1   0]
+ [ 13   0   0   0  17   0   0   0   2   3   0   2   0   0   0   0   1   0  22   2   0]
+ [ 13   0   0   0 241   0   0   0   4   0   1   0   0   0   0   0   0   0   0   9   0]
+ [  2   0   0   0   0  66  13   0  10   0   0   0   0   0   0   0   0   0   1   4   0]
+ [  0   0   0   0   2  23  44   0   0   0   0   0   0   0   0   0   0   0   0   1   0]
+ [  0   1   0   0  16   0   0   0   0   0   1   8   0   0   0   0   0   0   0   6   0]
+ [  4   0   0   0   0   6   0   0 126   0   0   0   0   0   0   0   0   0   0   0   0]
+ [  1   0   0   0   0   6   1   0   0  37   1   5   0   0   0   0   9   0   2   0   0]
+ [  0   0   0   0   0   0   0   0   0   0 146   0   0   0   0   0   0   0   0   0   0]
+ [  8   0   0   0   7   0   0   0   0   1   1  74   0   0   0   0   2   0   1   1   1]
+ [ 10   0   0   0   5  17   8   0   6   2   0   3   0   0   0   0   0   0   3   4   0]
+ [  2   0   0   0  12   0   0   0   0   0   0   1   0   0   0   0   0   0   0   1   0]
+ [  0   0   0   0   1   4   0   0   5   0   0   0   0   0  69   0  18   0   0   1   0]
+ [  9   0   0   0   3   2   0   0   1   6   1   9   0   0   2   0   6   0   3   2   0]
+ [  0   0   0   0   0   0   0   0   0   1   0   1   0   0  10   0  76   0   0   0   0]
+ [  0   0   0   0   7   0   0   0   0   1   1   0   0   0   6   0  40   1   0   6   0]
+ [ 10   0   0   0  11   8   0   0   5   1   0   0   0   0   1   0   0   0  54   2   0]
+ [  0   0   0   0   2   0   0   0   0   0   0   0   0   0   0   0   1   0   0 119   0]
+ [  3   0   0   0  32   0   0   0   0   2   0  32   0   0   1   0   6   0   0   1   7]]

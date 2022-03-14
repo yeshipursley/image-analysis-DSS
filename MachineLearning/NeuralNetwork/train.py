@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import sys, getopt, os, time
 import numpy as np
 from sklearn import metrics
+from sklearn.metrics import PrecisionRecallDisplay, precision_recall_curve, precision_score
 
 from dataset import Qlsa
 from model import Convolutional, AlexNet, LeNet
@@ -17,6 +18,7 @@ VAL_ACC = list()
 VAL_LOSS = list()
 
 dirname = os.path.dirname(__file__)
+np.set_printoptions(linewidth=200)
 
 def main(argv):
     # Parameters
@@ -49,8 +51,11 @@ def main(argv):
     # Training and Validation Loop
     time_start = time.time()
     with open(f'MachineLearning\\NeuralNetwork\\models\\{model_name}\\log.txt', 'a+') as logfile:
+        
+        # Log stuff
         logfile.truncate(0)
         logfile.write(str(model))
+
         for epoch in range(num_epochs):
             print(f'Epoch {epoch + 1}/{num_epochs}')
             logfile.write(f'\n Epoch {epoch + 1}/{num_epochs}\n-----------------------------------------------------------------\n')
@@ -59,22 +64,23 @@ def main(argv):
             running_train_loss = TrainingLoop(train_loader, model, loss, optimizer, device, logfile)
             
             model.eval()
-            running_val_loss = ValidationLoop(validation_loader, model, loss, device, logfile)
+            precision, recall = ValidationLoop(validation_loader, model, loss, device, logfile)
 
             # If using callback function
             if running_train_loss <= stopping_point and stopping_point != -1:
                 num_epochs = epoch + 1
                 logfile.write(f'Early stopping at {epoch + 1} epochs')
                 break
+
         logfile.close()
     
     print(f'Elapsed time: {time.time() - time_start:>0.2f} seconds')
 
     # Save model
-    SaveModel(model, model_name)
+    #SaveModel(model, model_name)
 
     # Plot errors
-    PlotGraph(num_epochs)
+    #PlotGraph(num_epochs)
 
 def TrainingLoop(dataloader, model, loss_function, optimizer, device, logfile):
     logfile.write("--- Training Loop --- \n")
@@ -141,16 +147,25 @@ def ValidationLoop(dataloader, model, loss_function, device, logfile):
 
     logfile.write(f'Avg Loss: {val_loss:>7f}, Avg Acc: {(val_acc)*100:>0.1f}% \n')
 
-    logfile.write("\n --- Confusion Matrix --- \n")
-    logfile.write(np.array2string(metrics.confusion_matrix(y_true, y_pred)))
+    cm = metrics.confusion_matrix(y_true, y_pred)
 
-    logfile.write("\n\n --- Classification Report --- \n")
-    logfile.write(metrics.classification_report(y_true, y_pred, zero_division=True))
+    logfile.write("\n --- Confusion Matrix --- \n")
+    logfile.write(np.array2string(cm))
+
+    precision = np.array([np.diag(cm) / np.sum(cm, axis=0)])
+    recall = np.array([np.diag(cm) / np.sum(cm, axis=1)])
+
+    precision = np.around(precision, decimals=2)
+    recall = np.around(recall, decimals=2)
+
+    print(np.concatenate((precision, recall)))
+    #logfile.write("\n\n --- Classification Report --- \n")
+    #logfile.write()
 
     VAL_ACC.append(val_acc*100)
     VAL_LOSS.append(val_loss)
 
-    return val_loss
+    return precision, recall
 
 def LoadDataset(device, batch_size):
     transform = transforms.Compose([
