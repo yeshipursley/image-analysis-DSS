@@ -1,16 +1,16 @@
 from optparse import Values
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import pytesseract
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
-import cv2, pytesseract
-import numpy as np
 from PIL import Image
 
-import matplotlib.pyplot as plt
 
 # Object for letters that contain the image, the coordinates, and the classification.
-class Letter():
+class Letter:
     def __init__(self, image, x, y, w, h):
         self.image = image
         self.x = x
@@ -19,16 +19,16 @@ class Letter():
         self.h = h
         self.label = None
         self.confidence = None
-    
+
     def AddLabel(self, label, confidence):
         self.label = label
         self.confidence = confidence
 
 
-class Segmentor():
+class Segmentor:
     def __init__(self):
         return
-    
+
     def Segment(self, image):
         # Necessary for running pytesseract
         # Info on how to get it running: https://github.com/tesseract-ocr/tesseract/blob/main/README.md
@@ -38,7 +38,10 @@ class Segmentor():
         img = image
 
         # Grayscales image
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        if len(img.shape) == 3:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = img
 
         # otsu thresholding
         _, otsu = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -78,37 +81,40 @@ class Segmentor():
             hBox, wBox = crop.shape
 
             # Checks if the crop is too small or too large
-            if hBox > (1 / hBox * 100) and wBox > (1 / hBox * 100):
-                # Saves the cropped letter as an object
-                croppedLetter = Letter(crop, x, y, w, h)
+            if hBox != 0 and wBox != 0:
+                if hBox > (1 / hBox * 100) and wBox > (1 / hBox * 100):
+                    # Saves the cropped letter as an object
+                    croppedLetter = Letter(crop, x, y, w, h)
 
-                # appends the cropped letter to the array
-                segmentedLetters.append(croppedLetter)
-                #print("Successfully appended letter")
+                    # appends the cropped letter to the array
+                    segmentedLetters.append(croppedLetter)
+                    # print("Successfully appended letter")
 
-                # Creates a blue rectangle over the letter/image
-                cv2.rectangle(img, (x, hImg - y), (w, hImg - h), (255, 0, 0), 1)
-            else:
-                #print("Image to small or to large.")
+                    # Creates a blue rectangle over the letter/image
+                    cv2.rectangle(img, (x, hImg - y), (w, hImg - h), (255, 0, 0), 1)
+                else:
+                    # print("Image to small or to large.")
 
-                # Creates a red rectangle over it
-                cv2.rectangle(img, (x, hImg - y), (w, hImg - h), (0, 0, 255), 1)
+                    # Creates a red rectangle over it
+                    cv2.rectangle(img, (x, hImg - y), (w, hImg - h), (0, 0, 255), 1)
 
         # Saves the image with all the rectangles
         return segmentedLetters
 
-class Classifier():
-    def __init__(self, model, input_size = 100):
+
+class Classifier:
+    def __init__(self, model, input_size=100):
         self.input_size = input_size
 
         # Setup model
         self.model = Convolutional(input_size)
-        self.model.load_state_dict(torch.load(model))
+        self.model.load_state_dict(torch.load(model, map_location=torch.device('cpu')))
         self.model.eval()
 
         # Setup classes
-        self.classes = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
-    
+        self.classes = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED',
+                        'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
+
     def __LoadImages(self, letters):
         image_batch = np.zeros((len(letters), self.input_size, self.input_size))
         for i, letter in enumerate(letters):
@@ -117,25 +123,25 @@ class Classifier():
 
             # Fix the dimensions of the image
             new_image = Image.new(image.mode, (100, 100), 255)
-            x, y = int((100/2)) - int(image.width/2), int(100) - int(image.height) 
-            new_image.paste(image, (x,y))
+            x, y = int((100 / 2)) - int(image.width / 2), int(100) - int(image.height)
+            new_image.paste(image, (x, y))
 
             #  Converts back into numpy array
             np_image = np.array(new_image) / 255
             image_batch[i] = np_image
 
-        plt.imshow(image_batch[4], cmap="gray")
-        plt.show()
-        exit(0)
+        # plt.imshow(image_batch[4], cmap="gray")
+        # plt.show()
+        # exit(0)
         return image_batch
 
     def Classify(self, letters):
 
         images = self.__LoadImages(letters)
-        
+
         # Convert the numpy arrays into tensors
         images = torch.from_numpy(images).float()
-    
+
         # Fix the shape of the array
         images = images.unsqueeze(1)
 
@@ -149,22 +155,23 @@ class Classifier():
             confidence = np.argmax(result)
             prediction = self.classes[confidence]
             letters[i].AddLabel(prediction, confidence)
-        
+
         return letters
+
 
 class Convolutional(nn.Module):
     def __init__(self, input_size):
         super(Convolutional, self).__init__()
         # Convolutional layers and Max pooling with activation functions
         self.convolutional = nn.Sequential(
-            nn.Conv2d(1, 6, 5), 
+            nn.Conv2d(1, 6, 5),
             nn.ReLU(),
-            nn.MaxPool2d(2,2),
-            nn.Conv2d(6, 16, 5), 
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(6, 16, 5),
             nn.ReLU(),
-            nn.MaxPool2d(2,2)
+            nn.MaxPool2d(2, 2)
         )
-        
+
         # Fully connected layer with activation functions
         size = int((input_size / 4) - 3)
         self.fullyconnected = nn.Sequential(
