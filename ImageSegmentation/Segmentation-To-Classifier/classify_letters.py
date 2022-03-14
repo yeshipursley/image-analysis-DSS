@@ -129,10 +129,6 @@ class Classifier:
             #  Converts back into numpy array
             np_image = np.array(new_image) / 255
             image_batch[i] = np_image
-
-        # plt.imshow(image_batch[4], cmap="gray")
-        # plt.show()
-        # exit(0)
         return image_batch
 
     def Classify(self, letters):
