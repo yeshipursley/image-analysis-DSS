@@ -24,13 +24,13 @@ def main(argv):
     # Parameters
     learning_rate = 0.0005
     batch_size = 64
-    model_name, device, num_epochs, stopping_point = GetParameters(argv)
+    model_name, device, num_epochs, stopping_point, dataset = GetParameters(argv)
 
     # Load Dataset
-    validation_loader, train_loader = LoadDataset(device, batch_size)
+    validation_loader, train_loader = LoadDataset(dataset, device, batch_size)
 
     # Create model
-    model = Convolutional().to(device)
+    model = Convolutional(100).to(device)
 
     # Class Weights
     #raw = [515, 198, 113, 154, 594, 239, 194, 194, 77, 151, 365, 359, 143, 40, 242, 107, 217, 152, 337, 227, 424, 207]
@@ -64,7 +64,7 @@ def main(argv):
             running_train_loss = TrainingLoop(train_loader, model, loss, optimizer, device, logfile)
             
             model.eval()
-            precision, recall = ValidationLoop(validation_loader, model, loss, device, logfile)
+            ValidationLoop(validation_loader, model, loss, device, logfile)
 
             # If using callback function
             if running_train_loss <= stopping_point and stopping_point != -1:
@@ -152,31 +152,30 @@ def ValidationLoop(dataloader, model, loss_function, device, logfile):
     logfile.write("\n --- Confusion Matrix --- \n")
     logfile.write(np.array2string(cm))
 
-    precision = np.array([np.diag(cm) / np.sum(cm, axis=0)])
-    recall = np.array([np.diag(cm) / np.sum(cm, axis=1)])
+    #precision = np.array([np.diag(cm) / np.sum(cm, axis=0)])
+    #recall = np.array([np.diag(cm) / np.sum(cm, axis=1)])
 
-    precision = np.around(precision, decimals=2)
-    recall = np.around(recall, decimals=2)
+    #precision = np.around(precision, decimals=2)
+    #recall = np.around(recall, decimals=2)
 
-    print(np.concatenate((precision, recall)))
-    #logfile.write("\n\n --- Classification Report --- \n")
-    #logfile.write()
+    #print(np.concatenate((precision, recall)))
+    logfile.write("\n\n --- Classification Report --- \n")
+    logfile.write(metrics.classification_report(y_true,y_pred, zero_division=1))
 
     VAL_ACC.append(val_acc*100)
     VAL_LOSS.append(val_loss)
 
-    return precision, recall
+    #return precision, recall
 
-def LoadDataset(device, batch_size):
+def LoadDataset(dataset, device, batch_size):
     transform = transforms.Compose([
         transforms.ToTensor(),
         ]
     )
     
     # Load datasets
-    d = 'default+'
-    train_set = Qlsa(dataset=d, train=True, transform=transform)
-    validation_set = Qlsa(dataset=d, train=False, transform=transform)
+    train_set = Qlsa(dataset=dataset, train=True, transform=transform)
+    validation_set = Qlsa(dataset=dataset, train=False, transform=transform)
     
     # Create data loaders
     validation_loader = DataLoader(validation_set, batch_size=batch_size, shuffle=True)
@@ -228,9 +227,10 @@ def GetParameters(argv):
     stopping_point = -1
     model_name = 'default'
     device = torch.device("cpu")
+    dataset = "default"
 
     try:
-        opts, args = getopt.getopt(argv,"hm:e:", ["model=", "confusion", "report", "gpu", "earlystop="])
+        opts, args = getopt.getopt(argv,"hm:e:d:", ["model=", "confusion", "report", "gpu", "earlystop="])
     except:
         # ERROR
         print("Error")
@@ -256,6 +256,8 @@ def GetParameters(argv):
                 sys.exit(2)
         elif opt in ("--earlystop"):
             stopping_point = int(arg)
+        elif opt in ("-d"):
+            dataset = arg
         elif opt in ("--gpu"):
             if torch.cuda.is_available():
                 device = torch.device("cuda:0")
@@ -263,7 +265,7 @@ def GetParameters(argv):
                 print('GPU not available, using CPU')
                 device = torch.device("cpu")
     
-    return (model_name, device, num_epochs, stopping_point)
+    return (model_name, device, num_epochs, stopping_point, dataset)
 
 if __name__ == "__main__":
    main(sys.argv[1:])

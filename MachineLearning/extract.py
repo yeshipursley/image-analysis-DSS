@@ -7,6 +7,7 @@ import csv, random
 import sys, getopt
 
 from sklearn.svm import LinearSVR
+from sklearn.utils import resample
 
 dirname = os.path.dirname(__file__)
 CLASSES = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
@@ -27,7 +28,7 @@ def Method1(image):
     # Paste image in the middle of the emtpy image
     x, y = int((new_size/2)) - int(image.width/2), int((new_size/2)) - int(image.height/2)  
     new_image.paste(image, (x,y))
-    return new_image.resize((32,32), resample=Image.NEAREST)
+    return new_image.resize((100,100), resample=Image.NEAREST)
 
 def Method2(image):
     new_image = Image.new(image.mode, (100, 100), 255)
@@ -36,8 +37,14 @@ def Method2(image):
     new_image.paste(image, (x,y))
     return new_image
 
+def Method3(image):
+    new_image = Image.new(image.mode, (100, 100), 255)
+    x, y = int((100/2)) - int(image.width/2), int((100/2)) - int(image.height/2) 
+    new_image.paste(image, (x,y))
+    return new_image
+
 def ConvertImage(image):
-    return Method2(image)
+    return Method3(image)
 
 def Extract(folder_path, dataset_name):
     rows = [list() for x in range(22)]

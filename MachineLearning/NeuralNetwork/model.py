@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class Convolutional(nn.Module):
-    def __init__(self):
+    def __init__(self, size):
         super(Convolutional, self).__init__()
         self.convolutional = nn.Sequential(
             nn.Conv2d(1, 6, 5), # 1 input image channel, 6 output channels, 5x5 square convolution
@@ -19,8 +19,9 @@ class Convolutional(nn.Module):
             nn.MaxPool2d(2,2)
         )
         
+        size = int((size/4) - 3)
         self.fullyconnected = nn.Sequential(
-            nn.Linear(16 * 22 * 22, 256),
+            nn.Linear(16 * size * size, 256),
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.Sigmoid(),

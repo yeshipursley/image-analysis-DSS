@@ -116,7 +116,7 @@ def main(argv):
     
     # Load model
     print("Loading model", model_path)
-    model = Convolutional()
+    model = Convolutional(100)
     print(model)
     model.load_state_dict(torch.load(model_path))
     model.eval()

@@ -1,9 +1,9 @@
 from optparse import Values
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torch.nn.functional as nnf
 
-import cv2, pytesseract
+import cv2, pytesseract, math
 import numpy as np
 from PIL import Image
 
@@ -124,9 +124,6 @@ class Classifier():
             np_image = np.array(new_image) / 255
             image_batch[i] = np_image
 
-        plt.imshow(image_batch[4], cmap="gray")
-        plt.show()
-        exit(0)
         return image_batch
 
     def Classify(self, letters):
@@ -143,12 +140,14 @@ class Classifier():
         results = self.model(images)
 
         # Convert the predictions to a numpy array
-        results = results.detach().numpy()
-
+        
         for i, result in enumerate(results):
+            result = nnf.softmax(result, dim=0)
+            result = result.detach().numpy()
+
             confidence = np.argmax(result)
             prediction = self.classes[confidence]
-            letters[i].AddLabel(prediction, confidence)
+            letters[i].AddLabel(prediction, math.trunc(result[confidence] * 100))
         
         return letters
 
@@ -180,3 +179,11 @@ class Convolutional(nn.Module):
         x = torch.flatten(x, 1)
         x = self.fullyconnected(x)
         return x
+
+seg = Segmentor()
+cla = Classifier('MachineLearning\\NeuralNetwork\\models\\sigmoid+\\sigmoid+.model')
+
+imgs = seg.Segment(cv2.imread('ImageSegmentation\\Segmentation-To-Classifier\\jct032_1C_-_Copy.jpg'))
+result = cla.Classify(imgs)
+for i in result:
+    print(f'{i.label} at {i.confidence}%')
