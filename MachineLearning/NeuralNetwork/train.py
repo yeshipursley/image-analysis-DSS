@@ -170,6 +170,7 @@ def ValidationLoop(dataloader, model, loss_function, device, logfile):
 def LoadDataset(dataset, device, batch_size):
     transform = transforms.Compose([
         transforms.ToTensor(),
+        transforms.Normalize(0.5, 0.5)
         ]
     )
     

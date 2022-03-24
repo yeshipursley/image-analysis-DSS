@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import matplotlib.pyplot as plt
+
 class Convolutional(nn.Module):
     def __init__(self, size):
         super(Convolutional, self).__init__()
@@ -29,7 +31,15 @@ class Convolutional(nn.Module):
         )
 
     def forward(self, x):
+        #imgs = x[0].detach().numpy()
         x = self.convolutional(x)
+        #_, axs = plt.subplots(4, 4, figsize=(12, 12))
+        #axs = axs.flatten()
+        #imgs = x[0].detach().numpy()
+        #for img, ax in zip(imgs, axs):
+        #    ax.imshow(img, cmap='gray')
+        #plt.show()
+
         x = torch.flatten(x, 1)
         x = self.fullyconnected(x)
         return x
