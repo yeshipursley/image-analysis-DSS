@@ -165,8 +165,6 @@ def ValidationLoop(dataloader, model, loss_function, device, logfile):
     VAL_ACC.append(val_acc*100)
     VAL_LOSS.append(val_loss)
 
-    #return precision, recall
-
 def LoadDataset(dataset, device, batch_size):
     transform = transforms.Compose([
         transforms.ToTensor(),
@@ -226,9 +224,9 @@ def SaveModel(model, name):
 def GetParameters(argv):
     num_epochs = 20
     stopping_point = -1
-    model_name = 'default'
+    model_name = 'default+'
     device = torch.device("cpu")
-    dataset = "default"
+    dataset = "default+"
 
     try:
         opts, args = getopt.getopt(argv,"hm:e:d:", ["model=", "confusion", "report", "gpu", "earlystop="])

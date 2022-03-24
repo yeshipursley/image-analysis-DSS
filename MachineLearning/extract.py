@@ -31,7 +31,7 @@ def Method1(image):
     return new_image.resize((100,100), resample=Image.NEAREST)
 
 def Method2(image):
-    new_image = Image.new(image.mode, (100, 100), 187)
+    new_image = Image.new(image.mode, (100, 100), 255)
     # x, y = int((100/2)) - int(image.width/2), int((100/2)) - int(image.height/2) 
     x, y = int((100/2)) - int(image.width/2), int(100) - int(image.height) 
     new_image.paste(image, (x,y))
