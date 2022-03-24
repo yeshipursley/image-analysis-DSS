@@ -77,7 +77,7 @@ def main(argv):
     print(f'Elapsed time: {time.time() - time_start:>0.2f} seconds')
 
     # Save model
-    #SaveModel(model, model_name)
+    SaveModel(model, model_name)
 
     # Plot errors
     #PlotGraph(num_epochs)
