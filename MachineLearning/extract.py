@@ -44,7 +44,7 @@ def Method3(image):
     return new_image
 
 def ConvertImage(image):
-    return Method2(image)
+    return Method3(image)
 
 def Extract(folder_path, dataset_name):
     rows = [list() for x in range(22)]
@@ -60,7 +60,7 @@ def Extract(folder_path, dataset_name):
         for i, file in enumerate(files):
             # Find label 
             label = subdir.upper()[5:]
-            
+
             image = Image.open(subdir + "\\" + file ).convert('L')  
             new_image = ConvertImage(image)
             new_name = f'{label}_{i}.png'
