@@ -65,7 +65,7 @@ def main(argv):
             
             model.eval()
             ValidationLoop(validation_loader, model, loss, device, logfile)
-
+            
             # If using callback function
             if running_train_loss <= stopping_point and stopping_point != -1:
                 num_epochs = epoch + 1
@@ -152,15 +152,15 @@ def ValidationLoop(dataloader, model, loss_function, device, logfile):
     logfile.write("\n --- Confusion Matrix --- \n")
     logfile.write(np.array2string(cm))
 
-    #precision = np.array([np.diag(cm) / np.sum(cm, axis=0)])
-    #recall = np.array([np.diag(cm) / np.sum(cm, axis=1)])
-
-    #precision = np.around(precision, decimals=2)
-    #recall = np.around(recall, decimals=2)
-
-    #print(np.concatenate((precision, recall)))
     logfile.write("\n\n --- Classification Report --- \n")
     logfile.write(metrics.classification_report(y_true,y_pred, zero_division=1))
+
+    # Calculate percison and recall
+    precision = np.array([np.diag(cm) / np.sum(cm, axis=0)])
+    recall = np.array([np.diag(cm) / np.sum(cm, axis=1)])
+
+    precision = np.around(precision, decimals=2)
+    recall = np.around(recall, decimals=2)
 
     VAL_ACC.append(val_acc*100)
     VAL_LOSS.append(val_loss)
@@ -224,12 +224,12 @@ def SaveModel(model, name):
 def GetParameters(argv):
     num_epochs = 20
     stopping_point = -1
-    model_name = 'default+'
+    model_name = 'default'
     device = torch.device("cpu")
-    dataset = "default+"
+    dataset = "default"
 
     try:
-        opts, args = getopt.getopt(argv,"hm:e:d:", ["model=", "confusion", "report", "gpu", "earlystop="])
+        opts, args = getopt.getopt(argv,"hm:e:d:", ["dataset=", "model=", "confusion", "report", "gpu", "earlystop="])
     except:
         # ERROR
         print("Error")
@@ -245,7 +245,7 @@ def GetParameters(argv):
             "--confusion: for printing the confusion matrix every epoch\n",
             "--report: for printing the classification results every epoch\n")
             sys.exit()
-        elif opt in ("-m"):
+        elif opt in ("-m", "--model"):
             model_name = arg
         elif opt in ("-e"):
             try:
@@ -255,7 +255,7 @@ def GetParameters(argv):
                 sys.exit(2)
         elif opt in ("--earlystop"):
             stopping_point = int(arg)
-        elif opt in ("-d"):
+        elif opt in ("-d", "--dataset"):
             dataset = arg
         elif opt in ("--gpu"):
             if torch.cuda.is_available():

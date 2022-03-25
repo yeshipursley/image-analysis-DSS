@@ -59,11 +59,8 @@ def Extract(folder_path, dataset_name):
         print("Current subdirectory: "+ subdir)
         for i, file in enumerate(files):
             # Find label 
-            for className in CLASSES:
-                if className in file.upper():
-                    label = className
-                    break
-
+            label = subdir.upper()[5:]
+            
             image = Image.open(subdir + "\\" + file ).convert('L')  
             new_image = ConvertImage(image)
             new_name = f'{label}_{i}.png'
