@@ -93,7 +93,7 @@ def LoadImages(path):
     for i, filename in enumerate(os.listdir(path)):
         image = Image.open(path+ "\\" + filename).convert('L') # Opens the file as a Pillow image
         new_image = Image.new(image.mode, (100, 100), 255)
-        x, y = int((100/2)) - int(image.width/2), int(100) - int(image.height) 
+        x, y = int((100/2)) - int(image.width/2), int(100/2) - int(image.height/2) 
         new_image.paste(image, (x,y))
         np_image = np.array(new_image) # Converts the pil image into a numpy array
 
@@ -111,7 +111,7 @@ def main(argv):
     # default values
     input_path = dirname + '/data/input'
 
-    model_name = 'sigmoid+'
+    model_name = 'default'
     model_path = f'{dirname}/models/{model_name}/{model_name}.model'
     
     # Load model
@@ -139,8 +139,8 @@ def main(argv):
     PrintResults(results, images, filenames)
 
     # Prints put all the inputs in a graph visualization
-    #print("Graphs will be saved to the data/results folder")
-    #DisplayResults(results, images, labels)
+    print("Graphs will be saved to the data/results folder")
+    DisplayResults(results, images, labels)
 
 if __name__ == "__main__":
    main(sys.argv[1:])

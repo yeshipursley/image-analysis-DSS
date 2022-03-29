@@ -1,7 +1,10 @@
+import enum
+from matplotlib import collections
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
+import torch.nn.functional as nnf
 
 import matplotlib.pyplot as plt
 import sys, getopt, os, time
@@ -11,6 +14,7 @@ from sklearn.metrics import PrecisionRecallDisplay, precision_recall_curve, prec
 
 from dataset import Qlsa
 from model import Convolutional, AlexNet, LeNet
+from operator import itemgetter
 
 TRAIN_LOSS = list()
 TRAIN_ACC = list()
@@ -19,6 +23,86 @@ VAL_LOSS = list()
 
 dirname = os.path.dirname(__file__)
 np.set_printoptions(linewidth=200)
+
+def calc_curve(y_true, y_pred, y_perc):
+    Y = list()
+    for i, _ in enumerate(y_true):
+        Y.append([
+            y_true[i], 
+            y_pred[i], 
+            nnf.softmax(y_perc[i], 0).detach().numpy()[y_pred[i]]
+            ])
+
+    Y = sorted(Y, key=itemgetter(0))
+
+    probability_thresholds = np.linspace(0,1, num=100)
+
+    # Run through for first class
+    i = 0
+    for X in Y:
+        i += 1
+        if X[0] != 0:
+            break
+
+    X = Y[0:i-1]
+    X = np.array(X)
+    y_test_probs = X[:,2]
+
+    precision_scores = []
+    recall_scores = []
+    for p in probability_thresholds:
+        y_test_preds = []
+        for prob in y_test_probs:
+            if prob > p:
+                y_test_preds.append(1)
+            else:
+                y_test_preds.append(0)
+        
+        # Calc precision and recall
+        precision, recall = calc_percision_recall(X[:,0], y_test_preds)
+        precision_scores.append(precision)
+        recall_scores.append(recall)
+
+    print(precision_scores)
+    print(recall_scores)
+
+    plt.plot(recall_scores, precision_scores)
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.legend(loc='center left');
+    plt.show()
+    exit(0)
+
+def calc_percision_recall(y_true, y_pred):
+    y_true = [1 for x in y_true]
+
+    # Instantiate counters
+    TP = 0
+    FP = 0
+    FN = 0
+
+    # Determine whether each prediction is TP, FP, TN, or FN
+    for i, _ in enumerate(y_true): 
+        if y_true[i]==y_pred[i]==1:
+           TP += 1
+        if y_pred[i]==1 and y_true[i]!=y_pred[i]:
+           FP += 1
+        if y_pred[i]==0 and y_true[i]!=y_pred[i]:
+           FN += 1
+    
+    # Calculate true positive rate and false positive rate
+    # Use try-except statements to avoid problem of dividing by 0
+    try:
+        precision = TP / (TP + FP)
+    except:
+        precision = 1
+    
+    try:
+        recall = TP / (TP + FN)
+    except:
+        recall = 1
+
+    return precision, recall
 
 def main(argv):
     # Parameters
@@ -65,7 +149,7 @@ def main(argv):
             
             model.eval()
             ValidationLoop(validation_loader, model, loss, device, logfile)
-            
+
             # If using callback function
             if running_train_loss <= stopping_point and stopping_point != -1:
                 num_epochs = epoch + 1
@@ -124,7 +208,7 @@ def ValidationLoop(dataloader, model, loss_function, device, logfile):
     num_batches = len(dataloader)
     batch_size = dataloader.batch_size
     val_loss, val_acc, correct = 0, 0, 0
-    y_true, y_pred = list(), list()
+    y_true, y_pred, y_perc = list(), list(), list()
     
     with torch.no_grad():
         for batch, (image, label) in enumerate(dataloader):
@@ -133,9 +217,10 @@ def ValidationLoop(dataloader, model, loss_function, device, logfile):
             loss = loss_function(pred, label)
             correct = (pred.argmax(1) == label).type(torch.float).sum()
 
-            y_true.extend(label.cpu())
-            y_pred.extend(pred.argmax(1).cpu())
-
+            y_true.extend(label.cpu().detach().numpy())
+            y_pred.extend(pred.argmax(1).cpu().detach().numpy())
+            y_perc.extend(pred.cpu())
+            
             loss, current = loss.item(), batch * len(image)
             val_acc += correct.item()
             val_loss += loss
