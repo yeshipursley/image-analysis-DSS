@@ -7,6 +7,8 @@ import cv2, pytesseract, math
 import numpy as np
 from PIL import Image
 
+from image_straighten import deskew, unshear
+
 import matplotlib.pyplot as plt
 
 
@@ -42,8 +44,8 @@ def image_straighten(image):
 
 # Returns the confidence value of a letter as a boolean.
 def classLetterChecker(image):
-    confidenceValue = machinelearningFunction(image)
-    if confidenceValue > 80:
+    _, confidence_value = Classifier.SimplyClassify(image)
+    if confidence_value > 80:
         return True
     else:
         return False
