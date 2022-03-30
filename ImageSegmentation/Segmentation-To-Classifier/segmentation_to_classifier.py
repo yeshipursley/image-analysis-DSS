@@ -9,6 +9,7 @@ from PIL import Image
 
 import matplotlib.pyplot as plt
 
+
 # Object for letters that contain the image, the coordinates, and the classification.
 class Letter():
     def __init__(self, image, x, y, w, h):
@@ -19,16 +20,138 @@ class Letter():
         self.h = h
         self.label = None
         self.confidence = None
-    
+
     def AddLabel(self, label, confidence):
         self.label = label
         self.confidence = confidence
 
 
+# Straightens the letters in an image
+def image_straighten(image):
+    img = image
+
+    thresh = cv2.threshold(img, 127, 255, 1)[1]
+
+    deskew(thresh)
+    sheared_img = unshear(thresh)
+
+    ret, thresh = cv2.threshold(sheared_img, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    return thresh
+
+
+# Returns the confidence value of a letter as a boolean.
+def classLetterChecker(image):
+    confidenceValue = machinelearningFunction(image)
+    if confidenceValue > 80:
+        return False
+    else:
+        return True
+
+
+# Splits a word into letters
+def word_splitter(word):
+    image = image_straighten(word)
+
+    size = np.size(image)
+    skel = np.zeros(image.shape, np.uint8)
+
+    element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
+
+    # Skeletonizes the image
+    while True:
+        open = cv2.morphologyEx(image, cv2.MORPH_OPEN, element)
+        temp = cv2.subtract(image, open)
+
+        eroded = cv2.erode(image, element)
+        skel = cv2.bitwise_or(skel, temp)
+        image = eroded.copy()
+
+        if cv2.countNonZero(image) == 0:
+            break
+
+    hSkel, wSkel = skel.shape
+
+    # array for sum of vertical pixels
+    amountVertPixels = []
+
+    # counts the sum of vertical pixels in image
+    for i in range(wSkel):
+        colPixels = int((sum(skel[:, i])) / 255)
+        amountVertPixels.append(colPixels)
+
+    minLetterWidth = 15
+    segPoints = []
+
+    index = len(amountVertPixels) - 1
+
+    # Finds the segmentation points with the sum of vertical pixels
+    while index > 0:
+        if amountVertPixels[index] > 0:
+            for j in range(index, -1, -1):
+                if amountVertPixels[j] < 1:
+                    if amountVertPixels[j - 1] < 1:
+                        if (index - j) > minLetterWidth:
+                            segPoints.append(j)
+                            index = j
+                            break
+                        else:
+                            index = j
+                            break
+                if amountVertPixels[j] > 5:
+                    if (index - j) > minLetterWidth:
+                        segPoints.append(j)
+                        index = j
+                        break
+        index -= 1
+
+    # crops the letter based on the segmentation point
+    imageID = 1
+    segmentationIndex = len(amountVertPixels)
+    segmentedLettersInWord = []
+    for i in segPoints:
+        extend_image = 2
+        # if the segmentation is on the right side of the image
+        if segmentationIndex == len(amountVertPixels):
+            cropped_image = word[:, i:segmentationIndex]
+            while classLetterChecker(cropped_image):
+                # extends the image to the left until sufficient classification value
+                cropped_image = word[:, i - extend_image:segmentationIndex]
+                extend_image += 2
+            cropped_letter = Letter(cropped_image, i, None, segmentationIndex, None, None)
+            segmentedLettersInWord.append(cropped_letter)
+        # if the segmentation point is on the left side of the image
+        elif i < 2:
+            cropped_image = word[:, 0:segmentationIndex]
+            while classLetterChecker(cropped_image):
+                # extends the image to the right until sufficient classification value
+                cropped_image = word[:, 0:segmentationIndex + extend_image]
+                extend_image += 2
+            cropped_letter = Letter(cropped_image, i, None, segmentationIndex, None, None)
+            segmentedLettersInWord.append(cropped_letter)
+        # if the segmentation point is in the middle of the image
+        else:
+            croppedImage = word[:, i - 2:segmentationIndex + 2]
+            while classLetterChecker(croppedImage):
+                # Makes sure the crop doesn't go out of bounds
+                if i - extend_image < 0:
+                    start_crop_value = 0
+                else:
+                    start_crop_value = i - extend_image
+                # extends the crop on both sides
+                cropped_image = word[:, start_crop_value:segmentationIndex + extend_image]
+                extend_image += 2
+            cropped_letter = Letter(cropped_image, i, None, segmentationIndex, None, None)
+            segmentedLettersInWord.append(cropped_letter)
+        segmentationIndex = i
+        imageID += 1
+    return segmentedLettersInWord
+
+
 class Segmentor():
     def __init__(self):
         return
-    
+
     def Segment(self, image):
         # Necessary for running pytesseract
         # Info on how to get it running: https://github.com/tesseract-ocr/tesseract/blob/main/README.md
@@ -79,17 +202,21 @@ class Segmentor():
 
             # Checks if the crop is too small or too large
             if hBox > (1 / hBox * 100) and wBox > (1 / hBox * 100):
-                # Saves the cropped letter as an object
+                # If the segment is larger than 40 pixels wide
+                if wBox > 40:
+                    for i in word_splitter(crop):
+                        # Saves each segmented letter as a Letter object with the correct coordinate values
+                        croppedLetter = Letter(i, x + i.x, y, x + i.w, h, None)
+
+                        # appends the cropped letter to the array
+                        segmentedLetters.append(croppedLetter)
+                # Saves each segmented letter as a Letter object with the correct coordinate values
                 croppedLetter = Letter(crop, x, y, w, h)
 
                 # appends the cropped letter to the array
                 segmentedLetters.append(croppedLetter)
-                #print("Successfully appended letter")
-
-                # Creates a blue rectangle over the letter/image
-                cv2.rectangle(img, (x, hImg - y), (w, hImg - h), (255, 0, 0), 1)
             else:
-                #print("Image to small or to large.")
+                # print("Image to small or to large.")
 
                 # Creates a red rectangle over it
                 cv2.rectangle(img, (x, hImg - y), (w, hImg - h), (0, 0, 255), 1)
@@ -97,8 +224,9 @@ class Segmentor():
         # Saves the image with all the rectangles
         return segmentedLetters
 
+
 class Classifier():
-    def __init__(self, model, input_size = 100):
+    def __init__(self, model, input_size=100):
         self.input_size = input_size
 
         # Setup model
@@ -107,8 +235,9 @@ class Classifier():
         self.model.eval()
 
         # Setup classes
-        self.classes = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
-    
+        self.classes = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED',
+                        'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
+
     def __LoadImages(self, letters):
         image_batch = np.zeros((len(letters), self.input_size, self.input_size))
         for i, letter in enumerate(letters):
@@ -117,8 +246,8 @@ class Classifier():
 
             # Fix the dimensions of the image
             new_image = Image.new(image.mode, (100, 100), 255)
-            x, y = int((100/2)) - int(image.width/2), int(100) - int(image.height) 
-            new_image.paste(image, (x,y))
+            x, y = int((100 / 2)) - int(image.width / 2), int(100) - int(image.height)
+            new_image.paste(image, (x, y))
 
             #  Converts back into numpy array
             np_image = np.array(new_image) / 255
@@ -129,10 +258,10 @@ class Classifier():
     def Classify(self, letters):
 
         images = self.__LoadImages(letters)
-        
+
         # Convert the numpy arrays into tensors
         images = torch.from_numpy(images).float()
-    
+
         # Fix the shape of the array
         images = images.unsqueeze(1)
 
@@ -140,7 +269,7 @@ class Classifier():
         results = self.model(images)
 
         # Convert the predictions to a numpy array
-        
+
         for i, result in enumerate(results):
             result = nnf.softmax(result, dim=0)
             result = result.detach().numpy()
@@ -148,22 +277,23 @@ class Classifier():
             confidence = np.argmax(result)
             prediction = self.classes[confidence]
             letters[i].AddLabel(prediction, math.trunc(result[confidence] * 100))
-        
+
         return letters
+
 
 class Convolutional(nn.Module):
     def __init__(self, input_size):
         super(Convolutional, self).__init__()
         # Convolutional layers and Max pooling with activation functions
         self.convolutional = nn.Sequential(
-            nn.Conv2d(1, 6, 5), 
+            nn.Conv2d(1, 6, 5),
             nn.ReLU(),
-            nn.MaxPool2d(2,2),
-            nn.Conv2d(6, 16, 5), 
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(6, 16, 5),
             nn.ReLU(),
-            nn.MaxPool2d(2,2)
+            nn.MaxPool2d(2, 2)
         )
-        
+
         # Fully connected layer with activation functions
         size = int((input_size / 4) - 3)
         self.fullyconnected = nn.Sequential(
@@ -179,6 +309,7 @@ class Convolutional(nn.Module):
         x = torch.flatten(x, 1)
         x = self.fullyconnected(x)
         return x
+
 
 seg = Segmentor()
 cla = Classifier('MachineLearning\\NeuralNetwork\\models\\sigmoid+\\sigmoid+.model')
