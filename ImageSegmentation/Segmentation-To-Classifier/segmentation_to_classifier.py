@@ -44,9 +44,9 @@ def image_straighten(image):
 def classLetterChecker(image):
     confidenceValue = machinelearningFunction(image)
     if confidenceValue > 80:
-        return False
-    else:
         return True
+    else:
+        return False
 
 
 # Splits a word into letters
