@@ -248,7 +248,7 @@ class Classifier():
 
             # Fix the dimensions of the image
             new_image = Image.new(image.mode, (100, 100), 255)
-            x, y = int((100 / 2)) - int(image.width / 2), int(100) - int(image.height)
+            x, y = int((100 / 2)) - int(image.width / 2), int(100/2) - int(image.height/2)
             new_image.paste(image, (x, y))
 
             #  Converts back into numpy array
@@ -256,6 +256,32 @@ class Classifier():
             image_batch[i] = np_image
 
         return image_batch
+    
+    def SimplyClassify(self, image):
+        # Fix the dimensions of the image
+        image = Image.fromarray(image)
+        new_image = Image.new(image.mode, (100, 100), 255)
+        x, y = int((100 / 2)) - int(image.width / 2), int(100/2) - int(image.height/2)
+        new_image.paste(image, (x, y))
+        np_image = np.array(new_image) / 255
+
+        # Convert the numpy arrays into tensors
+        image = torch.from_numpy(np_image).float()
+
+        
+        # Fix the shape of the array
+        image = image.unsqueeze(0).unsqueeze(0)
+        # Predict
+        result = self.model(image)
+        result = result[0]
+        # Convert the predictions to a numpy array
+        
+        result = nnf.softmax(result, dim=0)
+        result = result.detach().numpy()
+        confidence = np.argmax(result)
+        prediction = self.classes[confidence]
+        return prediction, result[confidence] * 100
+
 
     def Classify(self, letters):
 
@@ -311,12 +337,3 @@ class Convolutional(nn.Module):
         x = torch.flatten(x, 1)
         x = self.fullyconnected(x)
         return x
-
-
-seg = Segmentor()
-cla = Classifier('MachineLearning\\NeuralNetwork\\models\\sigmoid+\\sigmoid+.model')
-
-imgs = seg.Segment(cv2.imread('ImageSegmentation\\Segmentation-To-Classifier\\jct032_1C_-_Copy.jpg'))
-result = cla.Classify(imgs)
-for i in result:
-    print(f'{i.label} at {i.confidence}%')
