@@ -49,6 +49,16 @@ def classLetterChecker(image):
         return True
     else:
         return False
+    
+# Removes the white space over a letter
+def image_cropper(img):
+    edged = cv2.Canny(img, 30, 200)
+
+    coords = cv2.findNonZero(edged)
+    x, y, w, h = cv2.boundingRect(coords)
+    crop = img[y:y + h, :]
+
+    return crop
 
 
 # Splits a word into letters
@@ -116,6 +126,7 @@ def word_splitter(word):
         # if the segmentation is on the right side of the image
         if segmentationIndex == len(amountVertPixels):
             cropped_image = word[:, i:segmentationIndex]
+            cropped_image = image_cropper(cropped_image)
             while classLetterChecker(cropped_image):
                 # extends the image to the left until sufficient classification value
                 cropped_image = word[:, i - extend_image:segmentationIndex]
@@ -125,6 +136,7 @@ def word_splitter(word):
         # if the segmentation point is on the left side of the image
         elif i < 2:
             cropped_image = word[:, 0:segmentationIndex]
+            cropped_image = image_cropper(cropped_image)
             while classLetterChecker(cropped_image):
                 # extends the image to the right until sufficient classification value
                 cropped_image = word[:, 0:segmentationIndex + extend_image]
@@ -134,6 +146,7 @@ def word_splitter(word):
         # if the segmentation point is in the middle of the image
         else:
             croppedImage = word[:, i - 2:segmentationIndex + 2]
+            cropped_image = image_cropper(cropped_image)
             while classLetterChecker(croppedImage):
                 # Makes sure the crop doesn't go out of bounds
                 if i - extend_image < 0:
