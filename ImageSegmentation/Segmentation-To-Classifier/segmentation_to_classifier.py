@@ -409,30 +409,32 @@ class Classifier():
 
 
 class Convolutional(nn.Module):
-    def __init__(self, input_size):
+    def __init__(self, size):
         super(Convolutional, self).__init__()
-        # Convolutional layers and Max pooling with activation functions
         self.convolutional = nn.Sequential(
-            nn.Conv2d(1, 6, 5),
+            nn.Conv2d(1, 6, 5), # 1 input image channel, 6 output channels, 5x5 square convolution
             nn.ReLU(),
-            nn.MaxPool2d(2, 2),
+            nn.MaxPool2d(2,2),
             nn.Conv2d(6, 16, 5),
             nn.ReLU(),
-            nn.MaxPool2d(2, 2)
+            nn.MaxPool2d(2,2)
         )
-
-        # Fully connected layer with activation functions
-        size = int((input_size / 4) - 3)
+        
+        size = int((size/4) - 3)
         self.fullyconnected = nn.Sequential(
             nn.Linear(16 * size * size, 256),
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.Sigmoid(),
-            nn.Linear(128, 22)
+            
         )
+
+        self.fc3 = nn.Linear(128, 22)
 
     def forward(self, x):
         x = self.convolutional(x)
+
         x = torch.flatten(x, 1)
         x = self.fullyconnected(x)
+        x = self.fc3(x)
         return x
