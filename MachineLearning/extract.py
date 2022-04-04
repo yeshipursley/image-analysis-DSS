@@ -67,21 +67,10 @@ def Extract(folder_path, dataset_name):
 
             # Save stuff
             new_image.save(dirname + '\\NeuralNetwork' + "\\datasets\\"+dataset_name+"\\images\\" + new_name)
-            index = CLASSES.index(label.upper())
-            # if label in FOURS:
-            #     index = FOURS.index(label.upper())
-            # else:
-            #     continue
-
-            # if label.upper() in MIXED:
-            #     index = 0
-            # elif label.upper() in HORSESHOE:
-            #     index = 1
-            # elif label.upper() in LINES:
-            #     index = 2
-            # elif label.upper() in FOURS:
-            #     index = 3
-
+            if label.upper() == "ALEF":
+                index = 0
+            else:
+                index = 1
             rows[index].append((new_name,index))
         
     return rows

@@ -13,8 +13,7 @@ from sklearn import metrics
 from sklearn.metrics import PrecisionRecallDisplay, precision_recall_curve, precision_score
 
 from dataset import Qlsa
-from model import Convolutional, AlexNet, LeNet
-from operator import itemgetter
+from model import Convolutional
 
 TRAIN_LOSS = list()
 TRAIN_ACC = list()
@@ -128,7 +127,7 @@ def ValidationLoop(dataloader, model, loss_function, device, logfile):
     num_batches = len(dataloader)
     batch_size = dataloader.batch_size
     val_loss, val_acc, correct = 0, 0, 0
-    y_true, y_pred, y_perc = list(), list(), list()
+    y_true, y_pred= list(), list()
     
     with torch.no_grad():
         for batch, (image, label) in enumerate(dataloader):
@@ -137,9 +136,8 @@ def ValidationLoop(dataloader, model, loss_function, device, logfile):
             loss = loss_function(pred, label)
             correct = (pred.argmax(1) == label).type(torch.float).sum()
 
-            y_true.extend(label.cpu().detach().numpy())
-            y_pred.extend(pred.argmax(1).cpu().detach().numpy())
-            y_perc.extend(pred.cpu())
+            y_true.extend(label.cpu())
+            y_pred.extend(pred.argmax(1).cpu())
             
             loss, current = loss.item(), batch * len(image)
             val_acc += correct.item()
@@ -161,11 +159,10 @@ def ValidationLoop(dataloader, model, loss_function, device, logfile):
     logfile.write(metrics.classification_report(y_true,y_pred, zero_division=1))
 
     # Calculate percison and recall
-    precision = np.array([np.diag(cm) / np.sum(cm, axis=0)])
-    recall = np.array([np.diag(cm) / np.sum(cm, axis=1)])
-
-    precision = np.around(precision, decimals=2)
-    recall = np.around(recall, decimals=2)
+    #precision = np.array([np.diag(cm) / np.sum(cm, axis=0)])
+    #recall = np.array([np.diag(cm) / np.sum(cm, axis=1)])
+    #precision = np.around(precision, decimals=2)
+    #recall = np.around(recall, decimals=2)
 
     VAL_ACC.append(val_acc*100)
     VAL_LOSS.append(val_loss)
