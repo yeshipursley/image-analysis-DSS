@@ -50,13 +50,17 @@ def classLetterChecker(image):
     
 # Removes the white space over a letter
 def image_cropper(img):
-    edged = cv2.Canny(img, 30, 200)
+    hImg, wImg = img.shape
+    if hImg > 1 and wImg > 1:
+        edged = cv2.Canny(img, 30, 200)
 
-    coords = cv2.findNonZero(edged)
-    x, y, w, h = cv2.boundingRect(coords)
-    crop = img[y:y + h, :]
+        coords = cv2.findNonZero(edged)
+        x, y, w, h = cv2.boundingRect(coords)
+        crop = img[y:y + h, :]
 
-    return crop
+        return crop
+    else:
+        return img
 
 
 # Splits a word into letters
