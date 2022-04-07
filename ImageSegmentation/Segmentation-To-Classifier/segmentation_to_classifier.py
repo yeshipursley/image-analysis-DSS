@@ -1,19 +1,17 @@
-from optparse import Values
+import math
+
+import cv2
+import numpy as np
+import pytesseract
 import torch
 import torch.nn as nn
 import torch.nn.functional as nnf
-
-import cv2, pytesseract, math
-import numpy as np
 from PIL import Image
-
-from image_straighten import deskew, unshear
-
-import matplotlib.pyplot as plt
+import image_straighten as imgStraighten
 
 
 # Object for letters that contain the image, the coordinates, and the classification.
-class Letter():
+class Letter:
     def __init__(self, image, x, y, w, h):
         self.image = image
         self.x = x
@@ -28,30 +26,31 @@ class Letter():
         self.confidence = confidence
 
 
+# Returns the confidence value of a letter as a boolean.
+def classLetterChecker(image):
+    classifier = Classifier("./default_2.model")
+    _, confidence_value = classifier.SimplyClassify(image)
+    return confidence_value
+
+
 # Straightens the letters in an image
 def image_straighten(image):
     img = image
 
     thresh = cv2.threshold(img, 127, 255, 1)[1]
 
-    deskew(thresh)
-    sheared_img = unshear(thresh)
+    imgStraighten.deskew(thresh)
+    sheared_img = imgStraighten.unshear(thresh)
 
     ret, thresh = cv2.threshold(sheared_img, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
     return thresh
 
 
-# Returns the confidence value of a letter.
-def classLetterChecker(image):
-    classifier = Classifier("default_2.model")
-    letter, confidence_value = classifier.SimplyClassify(image)
-    return confidence_value
-    
 # Removes the white space over a letter
 def image_cropper(img):
     hImg, wImg = img.shape
-    if hImg > 1 and wImg > 1:
+    if hImg >= 1 and wImg >= 1:
         edged = cv2.Canny(img, 30, 200)
 
         coords = cv2.findNonZero(edged)
@@ -60,7 +59,7 @@ def image_cropper(img):
 
         return crop
     else:
-        return img
+        return None
 
 
 # Splits a word into letters
@@ -243,36 +242,24 @@ def word_splitter(word):
     return segmentedLettersInWord
 
 
-class Segmentor():
+class Segmentor:
     def __init__(self):
         return
 
-    def Segment(self, image):
+    def segmentLetters(self, image):
         # Necessary for running pytesseract
         # Info on how to get it running: https://github.com/tesseract-ocr/tesseract/blob/main/README.md
-        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+        pytesseract.pytesseract.tesseract_cmd = r'tesseract\tesseract.exe'
 
-        # Reads image of scroll
-        img = image
-
-        # Grayscales image
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-        # otsu thresholding
-        _, otsu = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
-        # Denoises the otsu image
-        deNoiseOtsu = cv2.fastNlMeansDenoising(otsu, h=60.0, templateWindowSize=7, searchWindowSize=21)
-
-        ## Crops the images around the letters/words
+        # Crops the images around the letters/words
         # Saves the height and width of the images
-        hImg, wImg = deNoiseOtsu.shape
+        hImg, wImg = image.shape
 
         # array for the segmented letters
         segmentedLetters = []
 
         # Makes a box around each letter/word on the scroll
-        boxes = pytesseract.image_to_boxes(deNoiseOtsu, lang="heb")
+        boxes = pytesseract.image_to_boxes(image, lang="heb")
 
         # For each box
         for b in boxes.splitlines():
@@ -287,52 +274,119 @@ class Segmentor():
 
             # Crop the image so that we only get the letter/word
             # Structure image[rows, col]
-            crop = otsu[(hImg - h):(hImg - y), x:w]
+            crop = image[(hImg - h):(hImg - y), x:w]
 
             # Height and width of the cropped image
             hBox, wBox = crop.shape
 
             # Checks if the crop is too small or too large
-            if hBox > (1 / hBox * 100) and wBox > (1 / hBox * 100):
-                # If the segment is larger than 40 pixels wide
-                if wBox > 30:
+            if hBox != 0 and wBox != 0:
+                # Checks if the crop is too small or too large
+                if hBox > (1 / hBox * 100) and wBox > (1 / hBox * 100):
+                    # If the segment is larger than 40 pixels wide
+                    if wBox > 30:
 
-                    # checks if the box is a large letter
-                    if classLetterChecker(crop) > 90:
+                        # checks if the box is a large letter
+                        if classLetterChecker(crop) > 90:
+                            # Saves each segmented letter as a Letter object with the correct coordinate values
+                            croppedLetter = Letter(crop, x, y, w, h)
+
+                            # appends the cropped letter to the array
+                            segmentedLetters.append(croppedLetter)
+                        else:
+                            for i in word_splitter(crop):
+                                # Saves each segmented letter as a Letter object with the correct coordinate values
+                                croppedLetter = Letter(i.image, x + i.x, y, x + i.w, h)
+
+                                # appends the cropped letter to the array
+                                segmentedLetters.append(croppedLetter)
+
+                    # Found single letter
+                    else:
                         # Saves each segmented letter as a Letter object with the correct coordinate values
                         croppedLetter = Letter(crop, x, y, w, h)
 
                         # appends the cropped letter to the array
                         segmentedLetters.append(croppedLetter)
-                    else:
-                        for i in word_splitter(crop):
-                            # Saves each segmented letter as a Letter object with the correct coordinate values
-                            croppedLetter = Letter(i, x + i.x, y, x + i.w, h)
-
-                            # appends the cropped letter to the array
-                            segmentedLetters.append(croppedLetter)
-
-                # Found single letter
-                else:
-                    # Saves each segmented letter as a Letter object with the correct coordinate values
-                    croppedLetter = Letter(crop, x, y, w, h)
-
-                    # appends the cropped letter to the array
-                    segmentedLetters.append(croppedLetter)
-            else:
-                print("Found little box")
-
-        # Returns the letters
+        # Saves the image with all the rectangles
         return segmentedLetters
 
+    # Method that is run if the background in the image isnt varied
+    def segmentClearBackground(self, image):
+        # Reads image of scroll
+        img = image
 
-class Classifier():
+        # Grayscales image
+        if len(img.shape) == 3:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = img
+
+        # Does adaptive histogram equalization
+        clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(80, 80))
+        equalized = clahe.apply(gray)
+
+        # otsu thresholding
+        _, otsu = cv2.threshold(equalized, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # closing
+        invertedImg = cv2.bitwise_not(otsu)
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        closedImg = cv2.morphologyEx(invertedImg, cv2.MORPH_CLOSE, kernel)
+
+        invertedBack = cv2.bitwise_not(closedImg)
+
+        # Denoises the closed otsu image
+        deNoiseOtsu = cv2.fastNlMeansDenoising(invertedBack, h=60.0, templateWindowSize=7, searchWindowSize=21)
+
+        return self.segmentLetters(deNoiseOtsu)
+
+    # Method that is run if the background in the image is varied
+    def segmentVariedBackground(self, image):
+        # Reads image of scroll
+        img = image
+
+        # Grayscales image
+        if len(img.shape) == 3:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = img
+
+        # Adaptive binarization
+        binarizeIm = cv2.adaptiveThreshold(src=gray, maxValue=255, adaptiveMethod=cv2.ADAPTIVE_THRESH_MEAN_C,
+                                           thresholdType=cv2.THRESH_BINARY, blockSize=39, C=15)
+
+        # Opening
+        invertedImg = cv2.bitwise_not(binarizeIm)
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+
+        openedImg = cv2.morphologyEx(invertedImg, cv2.MORPH_OPEN, kernel)
+
+        invertedBack = cv2.bitwise_not(openedImg)
+
+        # Closing
+        invertedImg = cv2.bitwise_not(invertedBack)
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        closedImg = cv2.morphologyEx(invertedImg, cv2.MORPH_CLOSE, kernel)
+
+        invertedBack = cv2.bitwise_not(closedImg)
+
+        # Noise removal
+        deNoiseOtsu = cv2.fastNlMeansDenoising(invertedBack, h=60.0, templateWindowSize=7, searchWindowSize=21)
+
+        return self.segmentLetters(deNoiseOtsu)
+
+
+class Classifier:
     def __init__(self, model, input_size=100):
         self.input_size = input_size
 
         # Setup model
         self.model = Convolutional(input_size)
-        self.model.load_state_dict(torch.load(model))
+        self.model.load_state_dict(torch.load(model, map_location=torch.device('cpu')))
         self.model.eval()
 
         # Setup classes
@@ -342,45 +396,47 @@ class Classifier():
     def __LoadImages(self, letters):
         image_batch = np.zeros((len(letters), self.input_size, self.input_size))
         for i, letter in enumerate(letters):
-            # Load image from array
-            image = Image.fromarray(letter.image)
+            if letter.image is not None:
+                # Load image from array
+                image = Image.fromarray(letter.image)
 
-            # Fix the dimensions of the image
-            new_image = Image.new(image.mode, (100, 100), 255)
-            x, y = int((100 / 2)) - int(image.width / 2), int(100/2) - int(image.height/2)
-            new_image.paste(image, (x, y))
+                # Fix the dimensions of the image
+                new_image = Image.new(image.mode, (100, 100), 255)
+                # For sigmoid+.model
+                # x, y = int((100 / 2)) - int(image.width / 2), int(100) - int(image.height)
+                # For default.model
+                x, y = int((100 / 2)) - int(image.width / 2), int(100 / 2) - int(image.height / 2)
+                new_image.paste(image, (x, y))
 
-            #  Converts back into numpy array
-            np_image = np.array(new_image) / 255
-            image_batch[i] = np_image
+                #  Converts back into numpy array
+                np_image = np.array(new_image) / 255
+                image_batch[i] = np_image
 
         return image_batch
-    
+
     def SimplyClassify(self, image):
         # Fix the dimensions of the image
         image = Image.fromarray(image)
         new_image = Image.new(image.mode, (100, 100), 255)
-        x, y = int((100 / 2)) - int(image.width / 2), int(100/2) - int(image.height/2)
+        x, y = int((100 / 2)) - int(image.width / 2), int(100 / 2) - int(image.height / 2)
         new_image.paste(image, (x, y))
         np_image = np.array(new_image) / 255
 
         # Convert the numpy arrays into tensors
         image = torch.from_numpy(np_image).float()
 
-        
         # Fix the shape of the array
         image = image.unsqueeze(0).unsqueeze(0)
         # Predict
         result = self.model(image)
         result = result[0]
         # Convert the predictions to a numpy array
-        
+
         result = nnf.softmax(result, dim=0)
         result = result.detach().numpy()
         confidence = np.argmax(result)
         prediction = self.classes[confidence]
         return prediction, result[confidence] * 100
-
 
     def Classify(self, letters):
 
@@ -409,32 +465,30 @@ class Classifier():
 
 
 class Convolutional(nn.Module):
-    def __init__(self, size):
+    def __init__(self, input_size):
         super(Convolutional, self).__init__()
+        # Convolutional layers and Max pooling with activation functions
         self.convolutional = nn.Sequential(
-            nn.Conv2d(1, 6, 5), # 1 input image channel, 6 output channels, 5x5 square convolution
+            nn.Conv2d(1, 6, 5),
             nn.ReLU(),
-            nn.MaxPool2d(2,2),
+            nn.MaxPool2d(2, 2),
             nn.Conv2d(6, 16, 5),
             nn.ReLU(),
-            nn.MaxPool2d(2,2)
+            nn.MaxPool2d(2, 2)
         )
-        
-        size = int((size/4) - 3)
+
+        # Fully connected layer with activation functions
+        size = int((input_size / 4) - 3)
         self.fullyconnected = nn.Sequential(
             nn.Linear(16 * size * size, 256),
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.Sigmoid(),
-            
+            nn.Linear(128, 22)
         )
-
-        self.fc3 = nn.Linear(128, 22)
 
     def forward(self, x):
         x = self.convolutional(x)
-
         x = torch.flatten(x, 1)
         x = self.fullyconnected(x)
-        x = self.fc3(x)
         return x
