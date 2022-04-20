@@ -241,7 +241,7 @@ def word_splitter(word):
         segmentationIndex = i
         
     # Reverses the order of the letters so that they are in the correct order
-    segmented_letters_correct = segmented_letters_in_word[::-1]
+    segmented_letters_correct = segmentedLettersInWord[::-1]
 
     return segmented_letters_correct
 
