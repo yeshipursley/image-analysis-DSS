@@ -239,7 +239,11 @@ def word_splitter(word):
             cropped_letter = Letter(cropped_image, i, None, segmentationIndex, None)
             segmentedLettersInWord.append(cropped_letter)
         segmentationIndex = i
-    return segmentedLettersInWord
+        
+    # Reverses the order of the letters so that they are in the correct order
+    segmented_letters_correct = segmented_letters_in_word[::-1]
+
+    return segmented_letters_correct
 
 
 class Segmentor:
