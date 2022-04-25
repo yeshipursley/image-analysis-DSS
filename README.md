@@ -34,6 +34,11 @@ The way you run the python files in these three folders is the same for every fo
 necessary dependencies using the earlier step. This is how you run them:
 
 ```
+cd <folder_name>
+```
+Use cd to move to wanted folder.
+
+```
 python .\filename.py -input .\inputImage.jpg -output .\outputImage.jpg
 ```
 The *.\filename.py* is the name of the python file you want to run. The *.\inputImage.jpg* is the path of the image to want to do image enhancment on. 
