@@ -10,7 +10,7 @@ I would also recommend you download Anaconda: https://www.anaconda.com/products/
 ### Clone Repository
 Clone repository in a wanted location on your computer using: 
 ```
-$ git clone https://github.com/yeshipursley/image-analysis-DSS.git
+git clone https://github.com/yeshipursley/image-analysis-DSS.git
 ```
 ### Open Anaconda Prompt
 Once you have installed Anaconda you should be able to press the Windows button and search for Anaconda Prompt: 
