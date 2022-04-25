@@ -12,7 +12,6 @@ Clone repository in a wanted location on your computer using:
 ```
 $ git clone https://github.com/yeshipursley/image-analysis-DSS.git
 ```
-
 ### Open Anaconda Prompt
 Once you have installed Anaconda you should be able to press the Windows button and search for Anaconda Prompt: 
 
@@ -32,14 +31,14 @@ to install all the dependencies needed to run the files.
 ### Run Image Enhancement Files
 The image enhancement part of the project has been divided into three folders: Histogram, MorpholigicalTransformations and NoiseReduction. 
 The way you run the python files in these three folders is the same for every folder. You should run them in the Anaconda Prompt after you have installed the
-necessary dependencies using the earlier step. This is how you do it:
+necessary dependencies using the earlier step. This is how you run them:
 
 ```
 python .\filename.py -input .\inputImage.jpg -output .\outputImage.jpg
 ```
 The *.\filename.py* is the name of the python file you want to run. The *.\inputImage.jpg* is the path of the image to want to do image enhancment on. 
 The *.\outputImage.jpg* is the path where you want to store the now newly created image that has been enhanced. The paths can be absolute paths or relative paths to the cloned repo.
-Use backslashes ("\") in the paths and if you use relative paths use (.\path\imageName.jpg).   
+Use backslashes ("\\") in the paths and if you use relative paths use a dot before the path (.\path\imageName.jpg).   
 
 
 ### Run Image Segmentation Files
