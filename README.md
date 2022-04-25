@@ -42,7 +42,7 @@ Use cd to move to wanted folder.
 python .\filename.py -input .\inputImage.jpg -output .\outputImage.jpg
 ```
 The *.\filename.py* is the name of the python file you want to run. The *.\inputImage.jpg* is the path of the image to want to do image enhancment on. 
-The *.\outputImage.jpg* is the path where you want to store the now newly created image that has been enhanced. The paths can be absolute paths or relative paths to the cloned repo.
+The *.\outputImage.jpg* is the path where you want to store the now newly created image that has been enhanced. Remember to include the filename in this path. The paths can be absolute paths or relative paths to the cloned repo.
 Use backslashes ("\\") in the paths and if you use relative paths use a dot before the path (.\path\imageName.jpg).   
 
 
