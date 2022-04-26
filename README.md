@@ -52,7 +52,7 @@ Use backslashes ("\\") in the paths and if you use relative paths use a dot befo
 ### Run Machine Learning Files
 #### Training
 ```
-python MachineLearning/NeuralNetwork/train.py
+python MachineLearning\NeuralNetwork\train.py
 ```
 Add `--gpu` to run the training on an available GPU  
 Add `-e :number:` to run the training for a set number of epochs, where `:number:` is your desired epoch (default is 20)  
@@ -62,14 +62,14 @@ Add `--earlystop :loss:` to use the callback function and stop the training at a
 
 #### Extraction
 ```
-python MachineLearning/extract.py
+python MachineLearning\extract.py
 ```
 Add `-d :path:` to specify what `:path:` folder the dataset should be extracted from, folder needs to have subfolders with all the letters with their respective name  
 Add `-n :name:` or `--name :name: `to specify what `:name:` the dataset should be called, datasets are saved in the `MachineLearning/NeuralNetwork/datasets` folder 
 
 #### Predict
 ```
-python MachineLearning/NeuralNetwork/predict.py
+python MachineLearning\NeuralNetwork\predict.py
 ```
 
 You will need to change the model_name variable at line 114 to the desired model located in the `MachineLearning/NeuralNetwork/models` folder 
