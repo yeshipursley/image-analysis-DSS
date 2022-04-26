@@ -59,3 +59,17 @@ Add `-e :number:` to run the training for a set number of epochs, where `:number
 Add `-d :name:` or `--dataset :name:` to run a dataset other than the default "default", datasets must be located in the `MachineLearning/NeuralNetwork/datasets` folder  
 Add `-m :name:` or `--model :name:` to give the trained model a name other than "default", trained models will be saved in the `MachineLearning/NeuralNetwork/models` folder  
 Add `--earlystop :loss:` to use the callback function and stop the training at a certain loss value, or until all epochs are completed  
+
+#### Extraction
+```
+python MachineLearning/extract.py
+```
+Add `-d :path:` to specify what `:path:` folder the dataset should be extracted from, folder needs to have subfolders with all the letters with their respective name  
+Add `-n :name:` or `--name :name: `to specify what `:name:` the dataset should be called, datasets are saved in the `MachineLearning/NeuralNetwork/datasets` folder 
+
+#### Predict
+```
+python MachineLearning/NeuralNetwork/predict.py
+```
+
+You will need to change the model_name variable at line 114 to the desired model located in the `MachineLearning/NeuralNetwork/models` folder 
