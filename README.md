@@ -50,3 +50,12 @@ Use backslashes ("\\") in the paths and if you use relative paths use a dot befo
 
 
 ### Run Machine Learning Files
+#### Training
+```
+python MachineLearning/NeuralNetwork/train.py
+```
+Add `--gpu` to run the training on an available GPU
+Add `-e :number:` to run the training for a set number of epochs, where `:number:` is your desired epoch (default is 20)
+Add `-d :name:` or `--dataset :name:` to run a dataset other than the default "default", datasets must be located in the `MachineLearning/NeuralNetwork/datasets` folder
+Add `-m :name:` or `--model :name:` to give the trained model a name other than "default", trained models will be saved in the `MachineLearning/NeuralNetwork/models` folder
+Add `--earlystop :loss:` to use the callback function and stop the training at a certain loss value, or until all epochs are completed
