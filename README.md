@@ -35,11 +35,7 @@ dss\Scripts\activate
 ```
 source dss/bin/activate
 ```
-
-Terminal should now show or something similar:
-```
-(dss) $
-```
+Terminal should now show (dss) before the prompt.
 
 When you have navigated to the cloned repo you should use: 
 ```
