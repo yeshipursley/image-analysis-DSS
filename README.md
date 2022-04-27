@@ -22,6 +22,25 @@ Once you have opened that you should navigate to the repo. You can do this by us
 cd <full_path to the cloned repo>
 ```
 ### Use Pip Install
+Before installing the pip packages, create a virtual enviroment to make managing the pacakges easier with:
+```
+python3 -m venv dss
+```
+Then, to activate the virtual enviroment do:
+(Windows)
+```
+dss\Scripts\activate
+```
+(Mac and Linux)
+```
+source dss/bin/activate
+```
+
+Terminal should now show or something similar:
+```
+(dss) $
+```
+
 When you have navigated to the cloned repo you should use: 
 ```
 pip install -r requirements.txt
