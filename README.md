@@ -33,7 +33,7 @@ dss\Scripts\activate
 ```
 Terminal should now show (dss) before the prompt.
 
-When you have navigated to the cloned repo you should use: 
+When that is done you should use: 
 ```
 pip install -r requirements.txt
 ```
