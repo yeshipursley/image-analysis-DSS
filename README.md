@@ -31,10 +31,6 @@ Then, to activate the virtual enviroment do:
 ```
 dss\Scripts\activate
 ```
-(Mac and Linux)
-```
-source dss/bin/activate
-```
 Terminal should now show (dss) before the prompt.
 
 When you have navigated to the cloned repo you should use: 
