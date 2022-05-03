@@ -27,7 +27,6 @@ Before installing the pip packages, create a virtual enviroment to make managing
 python3 -m venv dss
 ```
 Then, to activate the virtual enviroment do:
-(Windows)
 ```
 dss\Scripts\activate
 ```
