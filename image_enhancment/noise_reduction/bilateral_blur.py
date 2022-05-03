@@ -11,54 +11,55 @@ except:
     print("Error")
     sys.exit(2)
 
-imagePath = None
-savePath = None
+# Getting the image path and save path from the command line
+image_path = None
+save_path = None
 
 for arg in args:
     if arg == "-input":
-        imagePath = args[args.index("-input") + 1]
+        image_path = args[args.index("-input") + 1]
     elif arg == "-output":
-        savePath = args[args.index("-output") + 1]
+        save_path = args[args.index("-output") + 1]
 
 # Checking if something is wrong with the arguments.
-if not imagePath or not savePath:
+if not image_path or not save_path:
     print("You must specify both image path and save path.")
     sys.exit(2)
 
-if not isinstance(imagePath, str) or not isinstance(savePath, str):
+if not isinstance(image_path, str) or not isinstance(save_path, str):
     print("The image path and save path must both be strings.")
     sys.exit(2)
 
-if not os.path.exists(imagePath):
+if not os.path.exists(image_path):
     print("The image path you have specified does not exits.")
     sys.exit(2)
 
-saveArr = savePath.split('\\')
+save_arr = save_path.split('\\')
 
-savePathBase = ""
+save_path_base = ""
 i = 0
-while i < len(saveArr):
-    if i == len(saveArr) - 1:
+while i < len(save_arr):
+    if i == len(save_arr) - 1:
         break
     elif i == 0:
-        savePathBase += saveArr[i]
+        save_path_base += save_arr[i]
     else:
-        savePathBase += "\\" + saveArr[i]
+        save_path_base += "\\" + save_arr[i]
     i += 1
 
-if not os.path.exists(savePathBase):
+if not os.path.exists(save_path_base):
     print("The save path you have specified does not exits.")
     sys.exit(2)
 
-# Read the grayscale image using imageio
-img = img.imread(imagePath)
+# Read the binarized image using imageio
+img = img.imread(image_path)
 
 # Using bilateral blur, which is highly effective at noise removal while preserving edges.
-bilateralBlur = cv.bilateralFilter(img, 9, 150, 150)
+bilateral_blur = cv.bilateralFilter(img, 9, 150, 150)
 
 # Saving the biniarized and blured image
-imgSave = Image.fromarray(bilateralBlur)
-imgSave.save(savePath)
+imgSave = Image.fromarray(bilateral_blur)
+imgSave.save(save_path)
 
 print(
-    "\nImage " + imagePath + " has successfully gone through bilateral blur denoisng and has been stored here: " + savePath)
+    "\nImage " + image_path + " has successfully gone through bilateral blur denoisng and has been stored here: " + save_path)

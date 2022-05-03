@@ -11,63 +11,64 @@ except:
     print("Error")
     sys.exit(2)
 
-imagePath = None
-savePath = None
+# Getting the image path and save path from the command line
+image_path = None
+save_path = None
 
 for arg in args:
     if arg == "-input":
-        imagePath = args[args.index("-input") + 1]
+        image_path = args[args.index("-input") + 1]
     elif arg == "-output":
-        savePath = args[args.index("-output") + 1]
+        save_path = args[args.index("-output") + 1]
 
 # Checking if something is wrong with the arguments.
-if not imagePath or not savePath:
+if not image_path or not save_path:
     print("You must specify both image path and save path.")
     sys.exit(2)
 
-if not isinstance(imagePath, str) or not isinstance(savePath, str):
+if not isinstance(image_path, str) or not isinstance(save_path, str):
     print("The image path and save path must both be strings.")
     sys.exit(2)
 
-if not os.path.exists(imagePath):
+if not os.path.exists(image_path):
     print("The image path you have specified does not exits.")
     sys.exit(2)
 
-saveArr = savePath.split('\\')
+save_arr = save_path.split('\\')
 
-savePathBase = ""
+save_path_base = ""
 i = 0
-while i < len(saveArr):
-    if i == len(saveArr) - 1:
+while i < len(save_arr):
+    if i == len(save_arr) - 1:
         break
     elif i == 0:
-        savePathBase += saveArr[i]
+        save_path_base += save_arr[i]
     else:
-        savePathBase += "\\" + saveArr[i]
+        save_path_base += "\\" + save_arr[i]
     i += 1
 
-if not os.path.exists(savePathBase):
+if not os.path.exists(save_path_base):
     print("The save path you have specified does not exits.")
     sys.exit(2)
 
-# Read the grayscale image using imageio
-img = img.imread(imagePath)
+# Read the binarized image using imageio
+img = img.imread(image_path)
 
 # Inverting the image
-invertedImg = cv.bitwise_not(img)
+inverted_img = cv.bitwise_not(img)
 
 # Creates an elliptical kernel
 kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (3,3))
 
 # Performs closing on the image
-closedImg = cv.morphologyEx(invertedImg, cv.MORPH_CLOSE, kernel)
+closed_img = cv.morphologyEx(inverted_img, cv.MORPH_CLOSE, kernel)
 
 # Inverts the image back
-invertedBack = cv.bitwise_not(closedImg)
+inverted_back = cv.bitwise_not(closed_img)
 
 # Saving the image that has gone through closing
-saveImg = Image.fromarray(invertedBack)
-saveImg.save(savePath)
+save_img = Image.fromarray(inverted_back)
+save_img.save(save_path)
 
 print(
-    "\nImage " + imagePath + " has successfully gone through closing and has been stored here: " + savePath)
+    "\nImage " + image_path + " has successfully gone through closing and has been stored here: " + save_path)
