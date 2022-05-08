@@ -34,6 +34,7 @@ def classLetterChecker(image):
 
 
 # Straightens the letters in an image
+# Source: https://github.com/RiteshKH/Cursive_handwriting_recognition/blob/master/image-straighten.py
 def image_straighten(image):
     img = image
 
@@ -49,8 +50,8 @@ def image_straighten(image):
 
 # Removes the white space over a letter
 def image_cropper(img):
-    hImg, wImg = img.shape
-    if hImg >= 1 and wImg >= 1:
+    h_img, w_img = img.shape
+    if h_img >= 1 and w_img >= 1:
         edged = cv2.Canny(img, 30, 200)
 
         coords = cv2.findNonZero(edged)
@@ -62,11 +63,9 @@ def image_cropper(img):
         return None
 
 
-# Splits a word into letters
-def word_splitter(word):
-    image = image_straighten(word)
-
-    size = np.size(image)
+# Skeletonizes the image
+# Source: https://medium.com/analytics-vidhya/skeletonization-in-python-using-opencv-b7fa16867331
+def skeletonize(image):
     skel = np.zeros(image.shape, np.uint8)
 
     element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
@@ -83,168 +82,224 @@ def word_splitter(word):
         if cv2.countNonZero(image) == 0:
             break
 
-    hSkel, wSkel = skel.shape
+    return skel
 
-    # array for sum of vertical pixels
-    amountVertPixels = []
 
-    # counts the sum of vertical pixels in image
-    for i in range(wSkel):
-        colPixels = int((sum(skel[:, i])) / 255)
-        amountVertPixels.append(colPixels)
+# calculates the segmentation points based on the array with the sum of the vertical pixels in an image
+def segmentation_point_finder(amount_vert_pixels, min_letter_width):
+    seg_points = []
 
-    minLetterWidth = 12
-    segPoints = []
-
-    index = len(amountVertPixels) - 1
+    index = len(amount_vert_pixels) - 1
 
     # Finds the segmentation points with the sum of vertical pixels
+    # iterates through the list backwards
     while index > 0:
-        if amountVertPixels[index] > 0:
+        if amount_vert_pixels[index] > 0:
             for j in range(index, -1, -1):
-                if amountVertPixels[j] < 1:
-                    if amountVertPixels[j - 1] < 1:
-                        if (index - j) > minLetterWidth:
-                            segPoints.append(j)
+                # if no vertical pixels are found
+                if amount_vert_pixels[j] < 1:
+                    # if no vertical pixels are found in the next element
+                    if amount_vert_pixels[j - 1] < 1 or j - 1 < 0:
+                        # this prevents segmentations from being two close
+                        if (index - j) > min_letter_width:
+                            seg_points.append(j)
                             index = j
                             break
                         else:
                             index = j
                             break
-                if amountVertPixels[j] > 5:
-                    if (index - j) > minLetterWidth:
-                        segPoints.append(j)
+                # if detected a vertical line
+                if amount_vert_pixels[j] > 5:
+                    if (index - j) > min_letter_width:
+                        seg_points.append(j)
                         index = j
                         break
         index -= 1
+    return seg_points
 
-    # adds segmentation point at the end so that last letter gets included
-    if segPoints:
-        if segPoints[-1] > minLetterWidth / 2:
-            segPoints.append(0)
 
-    # crops the letter based on the segmentation point
-    segmentationIndex = len(amountVertPixels)
-    segmentedLettersInWord = []
-    for i in segPoints:
+def word_cropper(seg_points, amount_vert_pixels, word, min_letter_width):
+    segmented_letters_in_word = []
+    segmentation_index = len(amount_vert_pixels) - 1
+
+    for i in seg_points:
+
         extend_image = 2
         out_of_bounds = False
 
-        # if the segmentation is on the right side of the image
-        if segmentationIndex > len(amountVertPixels)-5:
-            cropped_image = word[:, i:len(amountVertPixels)]
+        # if the segmentation is on the far right side of the image
+        if segmentation_index > len(amount_vert_pixels) - 5:
+            cropped_image = word[:, i:len(amount_vert_pixels)]
             cropped_image = image_cropper(cropped_image)
 
             confidence_value = 0
             best_extend_image = 0
             while True:
                 new_confidence_value = classLetterChecker(cropped_image)
-
-                # if the new confidence value is above 60 percent
                 if new_confidence_value > 60:
                     break
-                # checks if the image has extended further than minimum letter width distance /2
-                # or if it has gone out of bounds
-                elif extend_image > minLetterWidth/2 or out_of_bounds is True:
-                    #Uses the best extend image value that has the highest confidence value
-                    cropped_image = word[:, i - best_extend_image:len(amountVertPixels)]
+                # checks if we have extended the cropped image too far or if we have gone out of bounds
+                # too far is defined here as more than half the min_letter_width
+                elif extend_image > min_letter_width / 2 or out_of_bounds is True:
+                    cropped_image = word[:, i - best_extend_image:len(amount_vert_pixels)]
                     cropped_image = image_cropper(cropped_image)
                     break
-
                 else:
-                    # checks if the iteration has a higher confidence value
+                    # checks if the new confidence value is higher than the current hightest one
                     if confidence_value < new_confidence_value:
                         confidence_value = new_confidence_value
                         best_extend_image = extend_image
-                    # reached out of bounds
-                    if i-extend_image < 0:
+                    if i - extend_image < 0:
                         out_of_bounds = True
                     else:
                         # extends the image to the left until sufficient classification value
-                        cropped_image = word[:, i - extend_image:len(amountVertPixels)]
+                        cropped_image = word[:, i - extend_image:len(amount_vert_pixels)]
                         cropped_image = image_cropper(cropped_image)
                         extend_image += 2
-            cropped_letter = Letter(cropped_image, i, None, segmentationIndex, None)
-            segmentedLettersInWord.append(cropped_letter)
+            final_extend_image_left = i - best_extend_image
+            if final_extend_image_left < 0:
+                final_extend_image_left = 0
+
+            # Checks if the letter is thinner than the min_letter_width
+            if len(amount_vert_pixels) - final_extend_image_left < min_letter_width:
+                print("Letter is too thin. " + str(len(amount_vert_pixels) - final_extend_image_left))
+            else:
+                cropped_letter = Letter(cropped_image, final_extend_image_left, None, segmentation_index, None)
+                segmented_letters_in_word.append(cropped_letter)
 
         # if the segmentation point is on the left side of the image
         elif i < 4:
-            cropped_image = word[:, 0:segmentationIndex]
+            cropped_image = word[:, 0:segmentation_index]
             cropped_image = image_cropper(cropped_image)
 
             confidence_value = 0
             best_extend_image = 0
             while True:
                 new_confidence_value = classLetterChecker(cropped_image)
-
-                # if the new confidence value is above 60 percent
-                if new_confidence_value > 60:
-                    break
-                # checks if the image has extended further than minimum letter width distance /2
-                # or if it has gone out of bounds
-                elif extend_image > minLetterWidth / 2 or out_of_bounds is True:
-
-                    # Uses the best extend image value that has the highest confidence value
-                    cropped_image = word[:, 0:segmentationIndex + best_extend_image]
-                    cropped_image = image_cropper(cropped_image)
-                    break
-                else:
-                    #Saves the best confidence value and its extend_image value
-                    if confidence_value < new_confidence_value:
-                        confidence_value = new_confidence_value
-                        best_extend_image = extend_image
-                    if segmentationIndex + extend_image > len(amountVertPixels):
-                        out_of_bounds = True
-                    else:
-                        # extends the image to the right until sufficient classification value
-                        cropped_image = word[:, 0:segmentationIndex + extend_image]
-                        cropped_image = image_cropper(cropped_image)
-                        extend_image += 2
-            cropped_letter = Letter(cropped_image, i, None, segmentationIndex, None)
-            segmentedLettersInWord.append(cropped_letter)
-
-        # if the segmentation point is in the middle of the image
-        else:
-            cropped_image = word[:, i - extend_image:segmentationIndex + extend_image]
-            cropped_image = image_cropper(cropped_image)
-
-            confidence_value = 0
-            best_extend_image = 0
-            while True:
-                new_confidence_value = classLetterChecker(cropped_image)
-
-                # if the new confidence value is above 60 percent
                 if new_confidence_value > 60:
                     # finished
                     break
-                # checks if the image has extended further than minimum letter width distance /2
-                # or if it has gone out of bounds
-                elif extend_image > minLetterWidth or out_of_bounds is True:
-                    cropped_image = word[:, i-best_extend_image:segmentationIndex + best_extend_image]
+                # checks if we have extended the cropped image too far or if we have gone out of bounds
+                # too far is defined here as more than half the min_letter_width
+                elif extend_image > min_letter_width / 2 or out_of_bounds is True:
+                    cropped_image = word[:, 0:segmentation_index + best_extend_image]
                     cropped_image = image_cropper(cropped_image)
                     break
                 else:
-                    #Saves the best confidence value and its extend_image value
+                    # Saves the best confidence value and its extend_image value
                     if confidence_value < new_confidence_value:
                         confidence_value = new_confidence_value
                         best_extend_image = extend_image
-                    # checks if the extend image goes out of bounds on either end
-                    if i-extend_image < 0 or segmentationIndex + extend_image > len(amountVertPixels):
+                    if segmentation_index + extend_image > len(amount_vert_pixels):
+                        out_of_bounds = True
+                    else:
+                        # extends the image to the right until sufficient classification value
+                        cropped_image = word[:, 0:segmentation_index + extend_image]
+                        cropped_image = image_cropper(cropped_image)
+                        extend_image += 2
+
+            final_extend_image_right = segmentation_index + best_extend_image
+            _, width_cropped_image = cropped_image.shape
+
+            # Checks if the letter is thinner than the min_letter_width
+            if width_cropped_image < min_letter_width:
+                print("Letter is too thin. " + str(width_cropped_image))
+            else:
+                cropped_letter = Letter(cropped_image, i, None, final_extend_image_right, None)
+                segmented_letters_in_word.append(cropped_letter)
+
+        # if the segmentation point is in the middle of the image
+        else:
+            cropped_image = word[:, i - extend_image:segmentation_index + extend_image]
+            cropped_image = image_cropper(cropped_image)
+
+            confidence_value = 0
+            best_extend_image = 0
+            while True:
+                new_confidence_value = classLetterChecker(cropped_image)
+                if new_confidence_value > 60:
+                    # finished
+                    break
+                # checks if we have extended the cropped image too far or if we have gone out of bounds
+                # too far is defined here as more than half the min_letter_width
+                elif extend_image > min_letter_width or out_of_bounds is True:
+                    cropped_image = word[:, i - best_extend_image:segmentation_index + best_extend_image]
+                    cropped_image = image_cropper(cropped_image)
+                    break
+                else:
+                    # Saves the best confidence value and its extend_image value
+                    if confidence_value < new_confidence_value:
+                        confidence_value = new_confidence_value
+                        best_extend_image = extend_image
+                    if i - extend_image < 0 or segmentation_index + extend_image > len(amount_vert_pixels):
                         out_of_bounds = True
                     else:
                         # extends the crop on both sides
-                        cropped_image = word[:, i-extend_image:segmentationIndex + extend_image]
+                        cropped_image = word[:, i - extend_image:segmentation_index + extend_image]
                         cropped_image = image_cropper(cropped_image)
                         extend_image += 2
-            cropped_letter = Letter(cropped_image, i, None, segmentationIndex, None)
-            segmentedLettersInWord.append(cropped_letter)
-        segmentationIndex = i
-        
-    # Reverses the order of the letters so that they are in the correct order
-    segmented_letters_correct = segmentedLettersInWord[::-1]
+
+            final_extend_image_left = i - best_extend_image
+            final_extend_image_right = segmentation_index + best_extend_image
+
+            _, width_cropped_image = cropped_image.shape
+
+            if width_cropped_image < min_letter_width:
+                print("Letter is too thin. " + str(width_cropped_image))
+            else:
+                cropped_letter = Letter(cropped_image, final_extend_image_left, None, final_extend_image_right, None)
+                segmented_letters_in_word.append(cropped_letter)
+
+    return segmented_letters_in_word
+
+
+# Splits a word into letters
+def word_splitter(word):
+    # straightens the letter/letters in the image
+    image = image_straighten(word)
+
+    # skeletonizes the image
+    skel = skeletonize(image)
+
+    # gets the height and width of the skeletonized image
+    hSkel, wSkel = skel.shape
+
+    # array for sum of vertical pixels
+    amount_vert_pixels = []
+
+    # counts the sum of vertical pixels in image
+    for i in range(wSkel):
+        col_pixels = int((sum(skel[:, i])) / 255)
+        amount_vert_pixels.append(col_pixels)
+
+    min_letter_width = 12
+
+    # calculates the segmentation points in the image from the amount_vert_pixels array
+    seg_points = segmentation_point_finder(amount_vert_pixels, min_letter_width)
+
+    # if there are no segmentation points we add one at the far
+    # left side of the image so that the whole image gets segmented.
+    if not seg_points:
+        seg_points.append(0)
+
+    # if the last segmentation point is smaller than half the minimum letter width and there more than 1 segmentation
+    # points, it changes the last segmentation point to 0 since it is most likely not segmenting the entire letter
+    elif seg_points[-1] <= min_letter_width / 2 and len(seg_points) > 1:
+        seg_points[-1] = 0
+
+    # if the last segmentation point is larger than half of the minimum letter width, it appends a 0 to the
+    # segmentation points array. This is done to include the last letter.
+    elif seg_points[-1] > min_letter_width / 2:
+        seg_points.append(0)
+
+    # Crops the image of the word using the seg_points array, amout_vert_pixels array and the min_letter_width
+    segmented_letters_in_word = word_cropper(seg_points, amount_vert_pixels, word, min_letter_width)
+
+    # Reverses the array so that the letters are in the right order
+    # Most of the word splitter is performed reading the letters from right to left, which is why we need to reverse it
+    segmented_letters_correct = segmented_letters_in_word[::-1]
 
     return segmented_letters_correct
-
 
 class Segmentor:
     def __init__(self):
@@ -257,10 +312,10 @@ class Segmentor:
 
         # Crops the images around the letters/words
         # Saves the height and width of the images
-        hImg, wImg = image.shape
+        h_img, w_img = image.shape
 
         # array for the segmented letters
-        segmentedLetters = []
+        segmented_letters = []
 
         # Makes a box around each letter/word on the scroll
         boxes = pytesseract.image_to_boxes(image, lang="heb")
@@ -270,50 +325,50 @@ class Segmentor:
             # Splits the values of the box into an array
             b = b.split(' ')
             # Save the coordinates of the box:
-            # x = Distance between the top left corner of the box to the left frame
-            # y = Distance between the top of the box to the bottom frame
-            # w = Distance between the right side of the box to the left frame
-            # h = Distance between the bottom of the box to the bottom frame
+            # x = Distance between the left side of the box to the left frame of the image
+            # y = Distance between the top of the box to the bottom frame of the image
+            # w = Distance between the right side of the box to the left frame of the image
+            # h = Distance between the bottom of the box to the bottom frame of the image
             x, y, w, h = int(b[1]), int(b[2]), int(b[3]), int(b[4])
 
             # Crop the image so that we only get the letter/word
             # Structure image[rows, col]
-            crop = image[(hImg - h):(hImg - y), x:w]
+            crop = image[(h_img - h):(h_img - y), x:w]
 
             # Height and width of the cropped image
-            hBox, wBox = crop.shape
+            h_box, w_box = crop.shape
 
             # Checks if the crop is too small or too large
-            if hBox != 0 and wBox != 0:
+            if h_box != 0 and w_box != 0:
                 # Checks if the crop is too small or too large
-                if hBox > (1 / hBox * 100) and wBox > (1 / hBox * 100):
+                if h_box > (1 / h_box * 100) and w_box > (1 / h_box * 100):
                     # If the segment is larger than 40 pixels wide
-                    if wBox > 30:
+                    if w_box > 30:
 
                         # checks if the box is a large letter
                         if classLetterChecker(crop) > 90:
                             # Saves each segmented letter as a Letter object with the correct coordinate values
-                            croppedLetter = Letter(crop, x, y, w, h)
+                            cropped_letter = Letter(crop, x, y, w, h)
 
                             # appends the cropped letter to the array
-                            segmentedLetters.append(croppedLetter)
+                            segmented_letters.append(cropped_letter)
                         else:
                             for i in word_splitter(crop):
                                 # Saves each segmented letter as a Letter object with the correct coordinate values
-                                croppedLetter = Letter(i.image, x + i.x, y, x + i.w, h)
+                                cropped_letter = Letter(i.image, x + i.x, y, x + i.w, h)
 
                                 # appends the cropped letter to the array
-                                segmentedLetters.append(croppedLetter)
+                                segmented_letters.append(cropped_letter)
 
                     # Found single letter
                     else:
                         # Saves each segmented letter as a Letter object with the correct coordinate values
-                        croppedLetter = Letter(crop, x, y, w, h)
+                        cropped_letter = Letter(crop, x, y, w, h)
 
                         # appends the cropped letter to the array
-                        segmentedLetters.append(croppedLetter)
+                        segmented_letters.append(cropped_letter)
         # Saves the image with all the rectangles
-        return segmentedLetters
+        return segmented_letters
 
     # Method that is run if the background in the image isnt varied
     def segmentClearBackground(self, image):
@@ -342,9 +397,9 @@ class Segmentor:
         invertedBack = cv2.bitwise_not(closedImg)
 
         # Denoises the closed otsu image
-        deNoiseOtsu = cv2.fastNlMeansDenoising(invertedBack, h=60.0, templateWindowSize=7, searchWindowSize=21)
+        denoise_otsu = cv2.fastNlMeansDenoising(invertedBack, h=60.0, templateWindowSize=7, searchWindowSize=21)
 
-        return self.segmentLetters(deNoiseOtsu)
+        return self.segmentLetters(denoise_otsu)
 
     # Method that is run if the background in the image is varied
     def segmentVariedBackground(self, image):
@@ -358,30 +413,30 @@ class Segmentor:
             gray = img
 
         # Adaptive binarization
-        binarizeIm = cv2.adaptiveThreshold(src=gray, maxValue=255, adaptiveMethod=cv2.ADAPTIVE_THRESH_MEAN_C,
+        binarize_im = cv2.adaptiveThreshold(src=gray, maxValue=255, adaptiveMethod=cv2.ADAPTIVE_THRESH_MEAN_C,
                                            thresholdType=cv2.THRESH_BINARY, blockSize=39, C=15)
 
         # Opening
-        invertedImg = cv2.bitwise_not(binarizeIm)
+        inverted_img = cv2.bitwise_not(binarize_im)
 
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
 
-        openedImg = cv2.morphologyEx(invertedImg, cv2.MORPH_OPEN, kernel)
+        opened_img = cv2.morphologyEx(inverted_img, cv2.MORPH_OPEN, kernel)
 
-        invertedBack = cv2.bitwise_not(openedImg)
+        inverted_back = cv2.bitwise_not(opened_img)
 
         # Closing
-        invertedImg = cv2.bitwise_not(invertedBack)
+        inverted_img = cv2.bitwise_not(inverted_back)
 
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-        closedImg = cv2.morphologyEx(invertedImg, cv2.MORPH_CLOSE, kernel)
+        closedImg = cv2.morphologyEx(inverted_img, cv2.MORPH_CLOSE, kernel)
 
-        invertedBack = cv2.bitwise_not(closedImg)
+        inverted_back = cv2.bitwise_not(closedImg)
 
         # Noise removal
-        deNoiseOtsu = cv2.fastNlMeansDenoising(invertedBack, h=60.0, templateWindowSize=7, searchWindowSize=21)
+        denoise_otsu = cv2.fastNlMeansDenoising(inverted_back, h=60.0, templateWindowSize=7, searchWindowSize=21)
 
-        return self.segmentLetters(deNoiseOtsu)
+        return self.segmentLetters(denoise_otsu)
 
 
 class Classifier:
