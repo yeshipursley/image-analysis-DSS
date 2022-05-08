@@ -301,6 +301,7 @@ def word_splitter(word):
 
     return segmented_letters_correct
 
+
 class Segmentor:
     def __init__(self):
         return
@@ -414,7 +415,7 @@ class Segmentor:
 
         # Adaptive binarization
         binarize_im = cv2.adaptiveThreshold(src=gray, maxValue=255, adaptiveMethod=cv2.ADAPTIVE_THRESH_MEAN_C,
-                                           thresholdType=cv2.THRESH_BINARY, blockSize=39, C=15)
+                                            thresholdType=cv2.THRESH_BINARY, blockSize=39, C=15)
 
         # Opening
         inverted_img = cv2.bitwise_not(binarize_im)
@@ -551,3 +552,115 @@ class Convolutional(nn.Module):
         x = torch.flatten(x, 1)
         x = self.fullyconnected(x)
         return x
+
+
+class Tester():
+    def __init__(self):
+
+        # Saves the height of the image
+        # TODO FIX img shape
+        self.h_img, _, _ = img.shape
+
+    # Takes the letters in the YOLO format from the txt file and crops the letters based on the letters coordinates.
+    # Appends the cropped letters to an array
+    # Source: https://stackoverflow.com/questions/64096953/how-to-convert-yolo-format-bounding-box-coordinates-into-opencv-format
+    def yoloToCrop(self, original_image):
+        # Grayscales image
+        gray = cv2.cvtColor(original_image, cv2.COLOR_BGR2GRAY)
+
+        # otsu thresholding
+        _, otsu = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        dh, dw = otsu.shape
+
+        fl = open("YOLO FILE PLACEHOLDER", 'r')
+        data = fl.readlines()
+        fl.close()
+
+        manually_segmented_letters = []
+
+        for dt in data:
+            # Split string to float
+            _, x, y, w, h = map(float, dt.split(' '))
+
+            # Taken from https://github.com/pjreddie/darknet/blob/810d7f797bdb2f021dbe65d2524c2ff6b8ab5c8b/src/image.c#L283-L291
+            # via https://stackoverflow.com/questions/44544471/how-to-get-the-coordinates-of-the-bounding-box-in-yolo-object-detection#comment102178409_44592380
+            l = int((x - w / 2) * dw)
+            r = int((x + w / 2) * dw)
+            t = int((y - h / 2) * dh)
+            b = int((y + h / 2) * dh)
+
+            if l < 0:
+                l = 0
+            if r > dw - 1:
+                r = dw - 1
+            if t < 0:
+                t = 0
+            if b > dh - 1:
+                b = dh - 1
+
+            # crops the image based on the coordinates
+            crop = otsu[t:b, l:r]
+
+            if crop.size:
+                # Creates a letter object for the image
+                ground_truth_letter = Letter(crop, l, t, r, b)
+
+                # appends the letter to the array
+                manually_segmented_letters.append(ground_truth_letter)
+
+        return manually_segmented_letters
+
+    # checks if two images overlap each other
+    # Source: https://www.baeldung.com/java-check-if-two-rectangles-overlap
+    def isOverlapping(self, first_image, second_image):
+        if first_image.y > second_image.h or first_image.h < second_image.y:
+            return False
+        if first_image.w < second_image.x or first_image.x > second_image.w:
+            return False
+        return True
+
+    # calculates the iou of the ground truth letters and the automatically segmented letters
+    def IOU(self, ground_truth, segmented_letters):
+
+        # makes the coordinates compatible with test
+        for i in segmented_letters:
+            i.h = self.h_img - i.h
+            i.y = self.h_img - i.y
+
+        iou_scores = []
+
+        # Iterates through the arrays and calculates the iou of the two letters
+        for ground in ground_truth:
+            for auto in segmented_letters:
+
+                # checks if the letters are overlapping
+                if self.isOverlapping(ground, auto):
+                    # Source: https://medium.com/analytics-vidhya/iou-intersection-over-union-705a39e7acef
+                    x_inter1 = max(ground.x, auto.x)
+                    y_inter1 = max(ground.y, auto.y)
+                    x_inter2 = min(ground.w, auto.w)
+                    y_inter2 = min(ground.h, auto.h)
+
+                    width_inter = abs(x_inter2 - x_inter1)
+                    height_inter = abs(y_inter2 - y_inter1)
+
+                    area_inter = width_inter * height_inter
+                    width_box1 = abs(ground.w - ground.x)
+                    height_box1 = abs(ground.h - ground.y)
+                    width_box2 = abs(auto.w - auto.x)
+                    height_box2 = abs(auto.h - auto.y)
+
+                    area_box1 = width_box1 * height_box1
+                    area_box2 = width_box2 * height_box2
+
+                    area_union = area_box1 + area_box2 - area_inter
+
+                    iou = area_inter / area_union
+
+                    iou_scores.append(iou)
+
+                    print("IOU: " + str(iou))
+
+        # Calculates the average iou_score
+        print("Average IOU score: " + str(np.average(iou_scores)))
