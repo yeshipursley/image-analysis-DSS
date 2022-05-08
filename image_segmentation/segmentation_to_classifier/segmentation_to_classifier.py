@@ -618,7 +618,13 @@ class Tester():
             return False
         if first_image.w < second_image.x or first_image.x > second_image.w:
             return False
-        return True
+        # We were getting this error in the IOU method:
+        # error: (-215:Assertion failed) !_img.empty() in function 'cv::imwrite'
+        # To prevent this we check if the image has a size.
+        if first_image.image.size and second_image.image.size:
+            return True
+        else:
+            return False
 
     # calculates the iou of the ground truth letters and the automatically segmented letters
     def IOU(self, ground_truth, segmented_letters):
