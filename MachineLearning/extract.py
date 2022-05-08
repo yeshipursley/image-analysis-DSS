@@ -12,39 +12,41 @@ from sklearn.utils import resample
 dirname = os.path.dirname(__file__)
 CLASSES = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
 
-def Method1(image):
-    ## Create empty bigger image   
-    new_size = image.width if image.width > image.height else image.height    
-    new_image = Image.new(image.mode, (new_size,new_size), 255)
+# def Method1(image):
+#     ## Create empty bigger image   
+#     new_size = image.width if image.width > image.height else image.height    
+#     new_image = Image.new(image.mode, (new_size,new_size), 255)
     
-    ## Resize image if its bigger than the new image
-    if image.height > new_size:
-        r = image.height / image.width
-        image = image.resize((int(new_size/r),new_size), resample=Image.NEAREST)
-    elif image.width > new_size:
-        r = image.width / image.height
-        image = image.resize((new_size,(int(new_size/r))), resample=Image.NEAREST)
+#     ## Resize image if its bigger than the new image
+#     if image.height > new_size:
+#         r = image.height / image.width
+#         image = image.resize((int(new_size/r),new_size), resample=Image.NEAREST)
+#     elif image.width > new_size:
+#         r = image.width / image.height
+#         image = image.resize((new_size,(int(new_size/r))), resample=Image.NEAREST)
 
-    # Paste image in the middle of the emtpy image
-    x, y = int((new_size/2)) - int(image.width/2), int((new_size/2)) - int(image.height/2)  
-    new_image.paste(image, (x,y))
-    return new_image.resize((100,100), resample=Image.NEAREST)
+#     # Paste image in the middle of the emtpy image
+#     x, y = int((new_size/2)) - int(image.width/2), int((new_size/2)) - int(image.height/2)  
+#     new_image.paste(image, (x,y))
+#     return new_image.resize((100,100), resample=Image.NEAREST)
 
-def Method2(image):
-    new_image = Image.new(image.mode, (100, 100), 255)
-    # x, y = int((100/2)) - int(image.width/2), int((100/2)) - int(image.height/2) 
-    x, y = int((100/2)) - int(image.width/2), int(100) - int(image.height) 
-    new_image.paste(image, (x,y))
-    return new_image
-
-def Method3(image):
-    new_image = Image.new(image.mode, (100, 100), 255)
-    x, y = int((100/2)) - int(image.width/2), int((100/2)) - int(image.height/2) 
-    new_image.paste(image, (x,y))
-    return new_image
+# def Method2(image):
+#     new_image = Image.new(image.mode, (100, 100), 255)
+#     # x, y = int((100/2)) - int(image.width/2), int((100/2)) - int(image.height/2) 
+#     x, y = int((100/2)) - int(image.width/2), int(100) - int(image.height) 
+#     new_image.paste(image, (x,y))
+#     return new_image
 
 def ConvertImage(image):
-    return Method3(image)
+    # Create a new image of larger size, size only works for the dataset where characters are not larger than 100
+    new_image = Image.new(image.mode, (100, 100), 255)
+
+    # Calculate the position of the character
+    x, y = int((100/2)) - int(image.width/2), int((100/2)) - int(image.height/2) 
+    
+    # Paste the character on the new image
+    new_image.paste(image, (x,y))
+    return new_image
 
 def Extract(folder_path, dataset_name):
     rows = [list() for x in range(22)]
@@ -76,6 +78,7 @@ def Extract(folder_path, dataset_name):
     return rows
 
 def WriteCSV(name, rows, limit, whitelist):
+    # Check for files, and create if they do not exist
     if not os.path.isfile(dirname + '\\NeuralNetwork' + '\\datasets\\'+name+'\\test.csv'):
         f = open(dirname + '\\NeuralNetwork' + '\\datasets\\'+name+'\\test.csv', 'x')
         f.close()

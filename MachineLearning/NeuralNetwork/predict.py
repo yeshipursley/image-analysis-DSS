@@ -1,12 +1,17 @@
 from model import Convolutional
-import os
-from PIL import Image
-import matplotlib.pyplot as plt
+
 import torch
 import torch.nn.functional as nnf
+
+import matplotlib.pyplot as plt
+from PIL import Image
 import numpy as np
+import math
+import sys
 import re
-import sys, math
+import os
+
+
 
 CLASSES = ['ALEF', 'BET', 'GIMEL', 'DALET', 'HE', 'VAV', 'ZAYIN', 'HET', 'TET', 'YOD', 'KAF', 'LAMED', 'MEM', 'NUN', 'SAMEKH', 'AYIN', 'PE', 'TSADI', 'QOF', 'RESH', 'SHIN', 'TAV']
 dirname = os.path.dirname(__file__)
@@ -107,7 +112,7 @@ def LoadImages(path):
     
     return (images, labels, os.listdir(path))
 
-def main(argv):
+def Main(argv):
     # default values
     input_path = dirname + '/data/input'
 
@@ -143,4 +148,4 @@ def main(argv):
     DisplayResults(results, images, labels)
 
 if __name__ == "__main__":
-   main(sys.argv[1:])
+   Main(sys.argv[1:])

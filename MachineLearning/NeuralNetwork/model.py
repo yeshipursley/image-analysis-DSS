@@ -46,3 +46,22 @@ class Convolutional(nn.Module):
         x = self.fullyconnected(x)
         x = self.fc3(x)
         return x
+
+class Linear(nn.Module):
+    def __init__(self):
+        super(Linear, self).__init__()
+        self.flatten = nn.Flatten()
+        # Layers
+        self.fc1 = nn.Linear(100 * 100, 256)
+        self.fc2 = nn.Linear(256, 128)
+        self.fc3 = nn.Linear(128, 22)
+        self.dropout = nn.Dropout(0.5)
+
+    def forward(self, x):
+        x = self.flatten(x)
+        x = self.fc1(x)
+        x = self.dropout(x)
+        x = self.fc2(torch.relu(x))
+        x = self.dropout(x)
+        x = self.fc3(torch.sigmoid(x))
+        return x
