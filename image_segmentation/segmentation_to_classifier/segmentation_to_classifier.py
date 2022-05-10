@@ -250,6 +250,9 @@ def word_cropper(seg_points, amount_vert_pixels, word, min_letter_width):
                 cropped_letter = Letter(cropped_image, final_extend_image_left, None, final_extend_image_right, None)
                 segmented_letters_in_word.append(cropped_letter)
 
+        # Changes the index to the segmentation point
+        segmentation_index = i
+
     return segmented_letters_in_word
 
 
