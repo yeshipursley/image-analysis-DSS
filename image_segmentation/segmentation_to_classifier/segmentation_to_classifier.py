@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as nnf
 from PIL import Image
-import image_straighten as imgStraighten
+import image_straighten as img_straighten
 
 
 # Object for letters that contain the image, the coordinates, and the classification.
@@ -35,13 +35,14 @@ def classLetterChecker(image):
 
 # Straightens the letters in an image
 # Source: https://github.com/RiteshKH/Cursive_handwriting_recognition/blob/master/image-straighten.py
+# Date: 11.05.2022
 def image_straighten(image):
     img = image
 
     thresh = cv2.threshold(img, 127, 255, 1)[1]
 
-    imgStraighten.deskew(thresh)
-    sheared_img = imgStraighten.unshear(thresh)
+    img_straighten.deskew(thresh)
+    sheared_img = img_straighten.unshear(thresh)
 
     ret, thresh = cv2.threshold(sheared_img, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
@@ -65,6 +66,7 @@ def image_cropper(img):
 
 # Skeletonizes the image
 # Source: https://medium.com/analytics-vidhya/skeletonization-in-python-using-opencv-b7fa16867331
+# Date: 11.05.2022
 def skeletonize(image):
     skel = np.zeros(image.shape, np.uint8)
 
@@ -559,14 +561,12 @@ class Convolutional(nn.Module):
 
 class Tester():
     def __init__(self):
-
-        # Saves the height of the image
-        # TODO FIX img shape
-        self.h_img, _, _ = img.shape
+        return
 
     # Takes the letters in the YOLO format from the txt file and crops the letters based on the letters coordinates.
     # Appends the cropped letters to an array
     # Source: https://stackoverflow.com/questions/64096953/how-to-convert-yolo-format-bounding-box-coordinates-into-opencv-format
+    # Date: 11.05.2022
     def yoloToCrop(self, original_image):
         # Grayscales image
         gray = cv2.cvtColor(original_image, cv2.COLOR_BGR2GRAY)
@@ -588,6 +588,7 @@ class Tester():
 
             # Taken from https://github.com/pjreddie/darknet/blob/810d7f797bdb2f021dbe65d2524c2ff6b8ab5c8b/src/image.c#L283-L291
             # via https://stackoverflow.com/questions/44544471/how-to-get-the-coordinates-of-the-bounding-box-in-yolo-object-detection#comment102178409_44592380
+            # Date: 11.05.2022
             l = int((x - w / 2) * dw)
             r = int((x + w / 2) * dw)
             t = int((y - h / 2) * dh)
@@ -616,6 +617,7 @@ class Tester():
 
     # checks if two images overlap each other
     # Source: https://www.baeldung.com/java-check-if-two-rectangles-overlap
+    # Date: 11.05.2022
     def isOverlapping(self, first_image, second_image):
         if first_image.y > second_image.h or first_image.h < second_image.y:
             return False
@@ -630,12 +632,13 @@ class Tester():
             return False
 
     # calculates the iou of the ground truth letters and the automatically segmented letters
-    def IOU(self, ground_truth, segmented_letters):
+    def IOU(self, ground_truth, segmented_letters, image):
 
+        h_img, _, _ = image.shape
         # makes the coordinates compatible with test
         for i in segmented_letters:
-            i.h = self.h_img - i.h
-            i.y = self.h_img - i.y
+            i.h = h_img - i.h
+            i.y = h_img - i.y
 
         iou_scores = []
 
@@ -646,6 +649,7 @@ class Tester():
                 # checks if the letters are overlapping
                 if self.isOverlapping(ground, auto):
                     # Source: https://medium.com/analytics-vidhya/iou-intersection-over-union-705a39e7acef
+                    # Date: 11.05.2022
                     x_inter1 = max(ground.x, auto.x)
                     y_inter1 = max(ground.y, auto.y)
                     x_inter2 = min(ground.w, auto.w)
