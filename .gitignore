@@ -1,6 +1,5 @@
-**/MachineLearning/NeuralNetwork/datasets
-**/MachineLearning/NeuralNetwork/__pycache__
+**/machine_learning/neural_network/datasets
+**/machine_learning/neural_network/__pycache__
 **/Data
-**/Data2
 **/venv
 **/mnist
