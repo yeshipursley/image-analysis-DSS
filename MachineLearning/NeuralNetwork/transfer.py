@@ -12,82 +12,97 @@ import time, copy
 batch_size = 64
 device = 'cpu'
 
-def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
-    since = time.time()
+def TrainingLoop(dataloader, model, loss_function, optimizer, device):
+    # Log header
+    print("--- Training Loop --- \n")
+    
+    # Training parameters
+    size = len(dataloader.dataset)
+    batch_size = dataloader.batch_size
+    num_batches = len(dataloader)
+    train_loss, train_acc, correct = 0, 0, 0
 
-    best_model_wts = copy.deepcopy(model.state_dict())
-    best_acc = 0.0
+    # Main loop
+    for batch, (image, label) in enumerate(dataloader):
+        image, label = image.to(device), label.to(device)
 
-    for epoch in range(num_epochs):
-        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-        print('-' * 10)
+        # Compute prediction and loss
+        pred = model(image)
+        loss = loss_function(pred, label)
+        correct = (pred.argmax(1) == label).sum()
+        
+        # Backpropagation step
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
-        # Each epoch has a training and validation phase
-        for phase in ['train', 'val']:
-            if phase == 'train':
-                model.train()  # Set model to training mode
-            else:
-                model.eval()   # Set model to evaluate mode
+        # Get the loss and accuracy
+        loss, current = loss.item(), batch * len(image)
+        train_acc += correct.item()
+        train_loss += loss
 
-            running_loss = 0.0
-            running_corrects = 0
+        # Log Loss and Accuracy per 100 batches
+        if batch % 100 == 0:
+            print(f'Loss: {loss:>7f}, Acc: {(correct/batch_size)*100:>0.1f}% [{current:>5d}/{size:>5d}] \n')
 
-            # Iterate over data.
-            for inputs, labels in dataloaders[phase]:
-                inputs = inputs.to(device)
-                labels = labels.to(device)
+    # Calculate average values
+    train_loss /= num_batches
+    train_acc /= size
 
-                # zero the parameter gradients
-                optimizer.zero_grad()
+    # log average Loss and Accuracy
+    print(f'Avg Loss: {loss:>7f}, Avg Acc: {(train_acc) * 100:>0.1f}% \n')
+    
+    return train_loss, train_acc
 
-                # forward
-                # track history if only in train
-                with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs)
-                    _, preds = torch.max(outputs, 1)
-                    loss = criterion(outputs, labels)
+def ValidationLoop(dataloader, model, loss_function, device):
+    # Log header
+    print("\n --- Validation Loop --- \n ")
 
-                    # backward + optimize only if in training phase
-                    if phase == 'train':
-                        loss.backward()
-                        optimizer.step()
+    # Training parameters
+    size = len(dataloader.dataset)
+    num_batches = len(dataloader)
+    batch_size = dataloader.batch_size
+    val_loss, val_acc, correct = 0, 0, 0
+    y_true, y_pred= list(), list()
+    
+    # Validation loop
+    with torch.no_grad():
+        for batch, (image, label) in enumerate(dataloader):
+            image, label = image.to(device), label.to(device)
 
-                # statistics
-                running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data)
-            if phase == 'train' and scheduler != None:
-                scheduler.step()
+            # Compute prediction and loss
+            pred = model(image)
+            loss = loss_function(pred, label)
+            correct = (pred.argmax(1) == label).type(torch.float).sum()
 
-            epoch_loss = running_loss / dataset_sizes[phase]
-            epoch_acc = running_corrects.double() / dataset_sizes[phase]
+            # Get the true labels and predictions
+            y_true.extend(label.cpu())
+            y_pred.extend(pred.argmax(1).cpu())
+            
+            # Get loss and accuracy
+            loss, current = loss.item(), batch * len(image)
+            val_acc += correct.item()
+            val_loss += loss
 
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-                phase, epoch_loss, epoch_acc))
+            # log loss and accuracy per 100 batches
+            if batch % 100 == 0:
+                print(f'Loss: {loss:>7f}, Acc: {(correct/batch_size)*100:>0.1f}% [{current:>5d}/{size:>5d}] \n')
 
-            # deep copy the model
-            if phase == 'val' and epoch_acc > best_acc:
-                best_acc = epoch_acc
-                best_model_wts = copy.deepcopy(model.state_dict())
+    # Calculate average loss and accuracy
+    val_loss /= num_batches
+    val_acc /= size
 
-        print()
+    # log average loss and accuracy
+    print(f'Avg Loss: {val_loss:>7f}, Avg Acc: {(val_acc)*100:>0.1f}% \n')
 
-    time_elapsed = time.time() - since
-    print('Training complete in {:.0f}m {:.0f}s'.format(
-        time_elapsed // 60, time_elapsed % 60))
-    print('Best val Acc: {:4f}'.format(best_acc))
+    # Calculate percison and recall
+    #precision = np.array([np.diag(cm) / np.sum(cm, axis=0)])
+    #recall = np.array([np.diag(cm) / np.sum(cm, axis=1)])
+    #precision = np.around(precision, decimals=2)
+    #recall = np.around(recall, decimals=2)
 
-    # load best model weights
-    model.load_state_dict(best_model_wts)
-    return model
+    return val_loss, val_acc
 
-# Load Data
-transform = transforms.Compose([
-        transforms.RandomInvert(1),
-        transforms.Resize((32,32)),
-        transforms.ToTensor(),
-        transforms.Normalize([0.5], [0.5])
-        ]
-    )
 
 # Load Model
 #model_conv = model.Convolutional()
@@ -106,10 +121,9 @@ transform = transforms.Compose([
 #dataloaders = {'train': DataLoader(train, batch_size, True), 'val': DataLoader(validate, batch_size, True)}
 #dataset_sizes = {'train': len(dataloaders['train'].dataset),'val': len(dataloaders['val'].dataset)}
 
-model_conv = model.Convolutional()
-model_conv.fc3 = nn.Linear(model_conv.fc3.in_features, 10)
-model_conv.load_state_dict(torch.load('mnist.model'))
-
+model_conv = torchvision.models.resnet18(pretrained=True)
+print(model_conv)
+#model_conv.load_state_dict(torch.load(r'MachineLearning\NeuralNetwork\models\mnist\mnist.model'))
 #criterion = nn.CrossEntropyLoss()
 #optimizer_conv = torch.optim.Adam(model_conv.parameters(), lr=0.001)
 #model_conv = train_model(model_conv, criterion, optimizer_conv, scheduler=None, num_epochs=25) 
@@ -119,29 +133,38 @@ model_conv.load_state_dict(torch.load('mnist.model'))
 for param in model_conv.parameters():
     param.requires_grad = False
 
-# Replace the fully connected layers
-model_conv.fullyconnected = nn.Sequential(
-    nn.Linear(model_conv.fc1.in_features, model_conv.fc1.out_features)
-)
-model_conv.fc2 = nn.Sequential(
-    nn.Linear(model_conv.fc2.in_features, model_conv.fc2.out_features)
-)
-model_conv.fc3 = nn.Sequential(
-    nn.Linear(model_conv.fc3.in_features, 22)
-)
+# Replace the last fully connected layers
+model_conv.fc = nn.Linear(model_conv.fc.in_features, 22)
+
+transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(0.5, 0.5)
+        ]
+    )
 
 # Load dataset
-dataset_name = 'merged_augmented'
+dataset_name = 'default'
 train = dataset.Qlsa(dataset=dataset_name, train=True, transform=transform)
 validate = dataset.Qlsa(dataset=dataset_name, train=False, transform=transform)
 dataloaders = {'train': DataLoader(train, batch_size, True), 'val': DataLoader(validate, batch_size, True)}
 dataset_sizes = {'train': len(dataloaders['train'].dataset),'val': len(dataloaders['val'].dataset)}
 
-# Loss and optimizer
-criterion = nn.CrossEntropyLoss()
-optimizer_conv = torch.optim.Adam(model_conv.parameters(), lr=0.01)
+# Optimizer & Loss
+optimizer = torch.optim.Adam(model_conv.parameters(), lr=0.01)
+loss = nn.CrossEntropyLoss()
 
-# # Decay LR by a factor of 0.1 every 7 epochs
-exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=3, gamma=0.1)
+# Main loop
+time_start = time.time()
+for epoch in range(40):
+    print(f'Epoch {epoch + 1}/{40}')
 
-model_conv = train_model(model_conv, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=25) 
+    # Training Loop
+    model_conv.train()
+    train_loss, train_acc = TrainingLoop(dataloaders['train'], model_conv, loss, optimizer, device)
+
+    # Validation Loop
+    model_conv.eval()
+    val_loss, val_acc = ValidationLoop(dataloaders['val'], model_conv, loss, device)
+
+print(f'Elapsed time: {time.time() - time_start:>0.2f} seconds')
+

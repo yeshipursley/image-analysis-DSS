@@ -1,4 +1,5 @@
 import torch
+import torchvision
 from torch import nn
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
@@ -193,13 +194,17 @@ def LoadDataset(dataset, device, batch_size):
     # Transform to apply to dataset
     transform = transforms.Compose([
         transforms.ToTensor(),
+        transforms.Resize(100),
         transforms.Normalize(0.5, 0.5)
         ]
     )
     
     # Load datasets
-    train_set = Qlsa(dataset=dataset, train=True, transform=transform)
-    validation_set = Qlsa(dataset=dataset, train=False, transform=transform)
+    #train_set = Qlsa(dataset=dataset, train=True, transform=transform)
+    #validation_set = Qlsa(dataset=dataset, train=False, transform=transform)
+
+    train_set = torchvision.datasets.MNIST("mnist", True, transform, download=True)
+    validation_set = torchvision.datasets.MNIST("mnist", False, transform, download=True)
     
     # Create data loaders
     validation_loader = DataLoader(validation_set, batch_size=batch_size, shuffle=True)

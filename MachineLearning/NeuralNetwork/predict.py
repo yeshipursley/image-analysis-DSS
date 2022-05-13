@@ -77,7 +77,7 @@ def PrintResults(results, images, filenames):
                     additional_guesses.append(f'{local_label} ({p * 100:.1f}%)')
         
         
-
+        print(label)
         if label in filename.upper():
             correct += 1
             print('\033[92m' + f'Perdicted that {filename} is {label} ({prediction*100:.1f}%) {"or" if len(additional_guesses) > 0 else ""} {" or ".join(additional_guesses)}' + '\033[0m')
