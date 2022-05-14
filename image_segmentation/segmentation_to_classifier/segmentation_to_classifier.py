@@ -120,6 +120,8 @@ def segmentation_point_finder(amount_vert_pixels, min_letter_width):
     return seg_points
 
 
+# Splits an image with multiple letters into multiple images each containing one letter.
+# The function uses the segmentation points as a baseline for the segments.
 def word_cropper(seg_points, amount_vert_pixels, word, min_letter_width):
     segmented_letters_in_word = []
     segmentation_index = len(amount_vert_pixels) - 1
@@ -277,6 +279,9 @@ def word_splitter(word):
         col_pixels = int((sum(skel[:, i])) / 255)
         amount_vert_pixels.append(col_pixels)
 
+    # We have set this value as 12 by looking at the letter "zayin", which is one of the thinnest letters, and checked
+    # how many pixels wide it is in the image. The size of the letters can be different in other images, so it is
+    # important to check if this constant applies to your image.
     min_letter_width = 12
 
     # calculates the segmentation points in the image from the amount_vert_pixels array
@@ -348,7 +353,7 @@ class Segmentor:
             if h_box != 0 and w_box != 0:
                 # Checks if the crop is too small or too large
                 if h_box > (1 / h_box * 100) and w_box > (1 / h_box * 100):
-                    # If the segment is larger than 40 pixels wide
+                    # If the segment is larger than 30 pixels wide
                     if w_box > 30:
 
                         # checks if the box is a large letter
