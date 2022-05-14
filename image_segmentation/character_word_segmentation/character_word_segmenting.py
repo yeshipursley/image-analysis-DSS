@@ -29,7 +29,7 @@ id = 0
 
 ## Crops the images around the letters/words
 # Saves the hight and widht of the images
-hImg, wImg = otsu.shape
+h_img, w_img = otsu.shape
 
 # Makes a box around each letter/word on the scroll
 boxes = pytesseract.image_to_boxes(otsu, lang="heb")
@@ -47,7 +47,7 @@ for b in boxes.splitlines():
 
     # Crop the image so that we only get the letter/word
     # Structure image[rows, col]
-    crop = otsu[(hImg-h):(hImg-y), x:w]
+    crop = otsu[(h_img - h):(h_img - y), x:w]
 
     # Height and width of the cropped image
     hBox, wBox = crop.shape
@@ -58,7 +58,7 @@ for b in boxes.splitlines():
         print(("Saving image number:" + str(id)), cv2.imwrite(str(id) + '.png', crop))
 
         # Creates a blue rectangle over the letter/image
-        cv2.rectangle(img, (x, hImg - y), (w, hImg - h), (255, 0, 0), 1)
+        cv2.rectangle(img, (x, h_img - y), (w, h_img - h), (255, 0, 0), 1)
 
         # Each image ID is incremented
         id += 1
@@ -66,7 +66,7 @@ for b in boxes.splitlines():
         print("Image to small.")
 
         # Creates a red rectangle over it
-        cv2.rectangle(img, (x, hImg - y), (w, hImg - h), (0, 0, 255), 1)
+        cv2.rectangle(img, (x, h_img - y), (w, h_img - h), (0, 0, 255), 1)
 
 # Saves the image with all of the rectangles
 print("Saving the img was successful:", cv2.imwrite('img.png', img))

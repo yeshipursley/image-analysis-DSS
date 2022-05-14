@@ -38,39 +38,39 @@ os.chdir('PLACEHOLDER')
 # h = Distance between the bottom of the box to the bottom frame
 
 # Detecting Characters and drawing red rectangles over them - gray image
-hImg, wImg = gray.shape
+h_img, w_img = gray.shape
 boxes = pytesseract.image_to_boxes(gray, lang="heb")
 for b in boxes.splitlines():
     b = b.split(' ')
     x, y, w, h = int(b[1]), int(b[2]), int(b[3]), int(b[4])
-    cv2.rectangle(gray, (x, hImg - y), (w, hImg - h), (0, 0, 255), 1)
+    cv2.rectangle(gray, (x, h_img - y), (w, h_img - h), (0, 0, 255), 1)
 
 # Detecting Characters and drawing red rectangles over them - otsu
-hImg, wImg = otsu.shape
+h_img, w_img = otsu.shape
 boxes = pytesseract.image_to_boxes(otsu, lang="heb")
 for b in boxes.splitlines():
     b = b.split(' ')
     x, y, w, h = int(b[1]), int(b[2]), int(b[3]), int(b[4])
-    cv2.rectangle(otsu, (x, hImg - y), (w, hImg - h), (0, 0, 255), 1)
+    cv2.rectangle(otsu, (x, h_img - y), (w, h_img - h), (0, 0, 255), 1)
 
 # Detecting Characters and drawing red rectangles over them - gauss
-hImg, wImg = gauss.shape
+h_img, w_img = gauss.shape
 boxes = pytesseract.image_to_boxes(gauss, lang="heb")
 for b in boxes.splitlines():
     b = b.split(' ')
     x, y, w, h = int(b[1]), int(b[2]), int(b[3]), int(b[4])
-    cv2.rectangle(gauss, (x, hImg - y), (w, hImg - h), (0, 0, 255), 1)
+    cv2.rectangle(gauss, (x, h_img - y), (w, h_img - h), (0, 0, 255), 1)
 
 # Detecting Characters and drawing red rectangles over them - otsu with median blur
-hImg, wImg = median.shape
+h_img, w_img = median.shape
 boxes = pytesseract.image_to_boxes(median, lang="heb")
 for b in boxes.splitlines():
     b = b.split(' ')
     x, y, w, h = int(b[1]), int(b[2]), int(b[3]), int(b[4])
-    cv2.rectangle(median, (x, hImg - y), (w, hImg - h), (0, 0, 255), 1)
+    cv2.rectangle(median, (x, h_img - y), (w, h_img - h), (0, 0, 255), 1)
 
 #saves images of bounding boxes around letters
-print("Saving the gray segment image was successful:", cv2.imwrite('graySeg.png', gray))
-print("Saving the otsu segment image was successful:", cv2.imwrite('otsuSeg.png', otsu))
+print("Saving the gray segment image was successful:", cv2.imwrite('gray_seg.png', gray))
+print("Saving the otsu segment image was successful:", cv2.imwrite('otsu_seg.png', otsu))
 print("Saving the gauss segment image was successful:", cv2.imwrite('gaussSeg.png', gauss))
-print("Saving the otsu with median blur segment image was successful:", cv2.imwrite('otsuMedianSeg.png', median))
+print("Saving the otsu with median blur segment image was successful:", cv2.imwrite('otsu_median_seg.png', median))
