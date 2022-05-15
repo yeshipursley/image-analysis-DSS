@@ -58,7 +58,20 @@ IMPORTANT: For the adaptive_histogram.py file the image should be rgb or gray-sc
 
 
 ### Run Image Segmentation Files
+Our image segmentation work has been divided into 5 folders:
+- Binarization_comparison: this file was used to test different binarization methods. 
+- custom_traineddata_file: contains our custom traineddata file
+- pytesseract_image_to_boxes_comparison: contains a file that was used to test how different binarization methods affect pytesseracts segmentation.
+- segmentation_to_classifier: contains files needed to run our image segmentation.
+- yolo_to_img: a file we created to manually convert letters extracted from LabelImg in the YOLO format to images.
 
+Steps to test our image segmentation:
+- copy the segmentation_to_classifier folder into another folder. 
+- In segmentation_to_classifier.py add these lines at the bottom of the code: 
+img = cv2.imread('path to your image')
+Segmentor().segmentClearBackground(img)
+- Run the segmentation_to_classifier.py file. 
+TODO add steps and test the steps
 
 ### Run Machine Learning Files
 #### Training
