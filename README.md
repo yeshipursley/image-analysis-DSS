@@ -75,7 +75,10 @@ Steps to test our image segmentation:
 - In segmentation_to_classifier.py add these lines at the bottom of the code: 
 ```
 img = cv2.imread('path to your image')
+
 Segmentor().segmentClearBackground(img)
+# or
+Segmentor().segmentVariedBackground(img)
 ```
 - Run the segmentation_to_classifier.py file. 
 
