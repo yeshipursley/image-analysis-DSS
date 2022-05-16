@@ -70,7 +70,7 @@ Steps to test our image segmentation:
 - Copy the segmentation_to_classifier folder into another folder. 
 - Download tesseract - https://github.com/UB-Mannheim/tesseract/wiki
 - Copy the heb.traineddata file from the "custom_traineddata_file" folder in this GitHub repository and put it into your Tesseract-OCR/tessdata folder.
-- Copy the default.model from "image-analysis-DSS/machine_learning/neural_network/models/default/" folder in this GitHub repositoty and paste it in your segmentation_to_classifier folder.
+- Copy the default.model from "image-analysis-DSS/machine_learning/neural_network/models/default/" folder in this GitHub repository and paste it in your segmentation_to_classifier folder.
 - In segmentation_to_classifier.py make sure the path, located at line 322, goes to your tesseract.exe file.
 - In segmentation_to_classifier.py add these lines at the bottom of the code: 
 ```
