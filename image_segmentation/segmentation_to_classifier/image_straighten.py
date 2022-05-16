@@ -3,6 +3,8 @@ import cv2
 import math
 from collections import OrderedDict
 
+# Source: https://github.com/RiteshKH/Cursive_handwriting_recognition/blob/master/image-straighten.py
+# Date: 11.05.2022
 
 # In[deskew]:
 def deskew(img):

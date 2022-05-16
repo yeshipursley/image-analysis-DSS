@@ -18,7 +18,7 @@ mean = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_B
 # otsu thresholding - Binary
 _, otsu = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-#median blur with Otsu
+# median blur with Otsu
 median = cv2.medianBlur(otsu, 5)
 
 # Change the current directory
@@ -30,4 +30,4 @@ os.chdir('PLACEHOLDER')
 print("Saving the gauss image was successful:", cv2.imwrite('gauss.png', gauss))
 print("Saving the mean image was successful:", cv2.imwrite('mean.png', mean))
 print("Saving the otsu image was successful:", cv2.imwrite('otsu.png', otsu))
-print("Saving the median image was successful:", cv2.imwrite('medianBlurOtsu.png', median))
+print("Saving the median image was successful:", cv2.imwrite('median_blur_otsu.png', median))
