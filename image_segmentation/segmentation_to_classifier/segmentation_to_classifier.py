@@ -28,7 +28,7 @@ class Letter:
 
 # Returns the confidence value of a letter as a boolean.
 def classLetterChecker(image):
-    classifier = Classifier("./default_2.model")
+    classifier = Classifier("default.model")
     _, confidence_value = classifier.SimplyClassify(image)
     return confidence_value
 
@@ -535,9 +535,8 @@ class Classifier:
 
 
 class Convolutional(nn.Module):
-    def __init__(self, input_size):
+    def __init__(self, size):
         super(Convolutional, self).__init__()
-        # Convolutional layers and Max pooling with activation functions
         self.convolutional = nn.Sequential(
             nn.Conv2d(1, 6, 5),
             nn.ReLU(),
@@ -547,20 +546,22 @@ class Convolutional(nn.Module):
             nn.MaxPool2d(2, 2)
         )
 
-        # Fully connected layer with activation functions
-        size = int((input_size / 4) - 3)
+        size = int((size / 4) - 3)
         self.fullyconnected = nn.Sequential(
             nn.Linear(16 * size * size, 256),
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.Sigmoid(),
-            nn.Linear(128, 22)
+
         )
+
+        self.fc3 = nn.Linear(128, 22)
 
     def forward(self, x):
         x = self.convolutional(x)
         x = torch.flatten(x, 1)
         x = self.fullyconnected(x)
+        x = self.fc3(x)
         return x
 
 
