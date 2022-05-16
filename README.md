@@ -57,7 +57,7 @@ Use backslashes ("\\") in the paths and if you use relative paths use a dot befo
 IMPORTANT: For the adaptive_histogram.py file the image should be rgb or gray-scale. For all the other files the image should be binarized.   
 
 
-### Run Image Segmentation Files
+### Image Segmentation Files Structure
 Our image segmentation work has been divided into 5 folders:
 - Binarization_comparison: this file was used to test different binarization methods. 
 - custom_traineddata_file: contains our custom traineddata file
@@ -65,13 +65,18 @@ Our image segmentation work has been divided into 5 folders:
 - segmentation_to_classifier: contains files needed to run our image segmentation.
 - yolo_to_img: a file we created to manually convert letters extracted from LabelImg in the YOLO format to images.
 
+### Run Image Segmentation Files
 Steps to test our image segmentation:
-- copy the segmentation_to_classifier folder into another folder. 
+- Copy the segmentation_to_classifier folder into another folder. 
+- Download tesseract - https://github.com/UB-Mannheim/tesseract/wiki
+- Copy the heb.traineddata file from the "custom_traineddata_file" folder in this GitHub repository and put it into your Tesseract-OCR/tessdata folder.
+- In segmentation_to_classifier.py make sure the path, located at line 322, goes to your tesseract.exe file.
 - In segmentation_to_classifier.py add these lines at the bottom of the code: 
+```
 img = cv2.imread('path to your image')
 Segmentor().segmentClearBackground(img)
+```
 - Run the segmentation_to_classifier.py file. 
-TODO add steps and test the steps
 
 ### Run Machine Learning Files
 #### Training
