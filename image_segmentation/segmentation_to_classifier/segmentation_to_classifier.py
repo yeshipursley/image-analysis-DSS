@@ -27,7 +27,7 @@ class Letter:
 
 
 # Returns the confidence value of a letter as a boolean.
-def classLetterChecker(image):
+def class_letter_checker(image):
     classifier = Classifier("default.model")
     _, confidence_value = classifier.SimplyClassify(image)
     return confidence_value
@@ -139,7 +139,7 @@ def word_cropper(seg_points, amount_vert_pixels, word, min_letter_width):
             confidence_value = 0
             best_extend_image = 0
             while True:
-                new_confidence_value = classLetterChecker(cropped_image)
+                new_confidence_value = class_letter_checker(cropped_image)
                 if new_confidence_value > 60:
                     break
                 # checks if we have extended the cropped image too far or if we have gone out of bounds
@@ -179,7 +179,7 @@ def word_cropper(seg_points, amount_vert_pixels, word, min_letter_width):
             confidence_value = 0
             best_extend_image = 0
             while True:
-                new_confidence_value = classLetterChecker(cropped_image)
+                new_confidence_value = class_letter_checker(cropped_image)
                 if new_confidence_value > 60:
                     # finished
                     break
@@ -220,7 +220,7 @@ def word_cropper(seg_points, amount_vert_pixels, word, min_letter_width):
             confidence_value = 0
             best_extend_image = 0
             while True:
-                new_confidence_value = classLetterChecker(cropped_image)
+                new_confidence_value = class_letter_checker(cropped_image)
                 if new_confidence_value > 60:
                     # finished
                     break
@@ -269,13 +269,13 @@ def word_splitter(word):
     skel = skeletonize(image)
 
     # gets the height and width of the skeletonized image
-    hSkel, wSkel = skel.shape
+    h_skel, w_skel = skel.shape
 
     # array for sum of vertical pixels
     amount_vert_pixels = []
 
     # counts the sum of vertical pixels in image
-    for i in range(wSkel):
+    for i in range(w_skel):
         col_pixels = int((sum(skel[:, i])) / 255)
         amount_vert_pixels.append(col_pixels)
 
@@ -316,7 +316,7 @@ class Segmentor:
     def __init__(self):
         return
 
-    def segmentLetters(self, image):
+    def segment_letters(self, image):
         # Necessary for running pytesseract
         # Info on how to get it running: https://github.com/tesseract-ocr/tesseract/blob/main/README.md
         pytesseract.pytesseract.tesseract_cmd = r'tesseract\tesseract.exe'
@@ -357,7 +357,7 @@ class Segmentor:
                     if w_box > 30:
 
                         # checks if the box is a large letter
-                        if classLetterChecker(crop) > 90:
+                        if class_letter_checker(crop) > 90:
                             # Saves each segmented letter as a Letter object with the correct coordinate values
                             cropped_letter = Letter(crop, x, y, w, h)
 
@@ -381,8 +381,8 @@ class Segmentor:
         # Saves the image with all the rectangles
         return segmented_letters
 
-    # Method that is run if the background in the image isnt varied
-    def segmentClearBackground(self, image):
+    # Method that is run if the background in the image isn't varied
+    def segment_clear_background(self, image):
         # Reads image of scroll
         img = image
 
@@ -400,20 +400,20 @@ class Segmentor:
         _, otsu = cv2.threshold(equalized, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
         # closing
-        invertedImg = cv2.bitwise_not(otsu)
+        inverted_img = cv2.bitwise_not(otsu)
 
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-        closedImg = cv2.morphologyEx(invertedImg, cv2.MORPH_CLOSE, kernel)
+        closedImg = cv2.morphologyEx(inverted_img, cv2.MORPH_CLOSE, kernel)
 
-        invertedBack = cv2.bitwise_not(closedImg)
+        inverted_back = cv2.bitwise_not(closedImg)
 
         # Denoises the closed otsu image
-        denoise_otsu = cv2.fastNlMeansDenoising(invertedBack, h=60.0, templateWindowSize=7, searchWindowSize=21)
+        denoise_otsu = cv2.fastNlMeansDenoising(inverted_back, h=60.0, templateWindowSize=7, searchWindowSize=21)
 
-        return self.segmentLetters(denoise_otsu)
+        return self.segment_letters(denoise_otsu)
 
     # Method that is run if the background in the image is varied
-    def segmentVariedBackground(self, image):
+    def segment_varied_background(self, image):
         # Reads image of scroll
         img = image
 
@@ -447,7 +447,7 @@ class Segmentor:
         # Noise removal
         denoise_otsu = cv2.fastNlMeansDenoising(inverted_back, h=60.0, templateWindowSize=7, searchWindowSize=21)
 
-        return self.segmentLetters(denoise_otsu)
+        return self.segment_letters(denoise_otsu)
 
 
 class Classifier:
@@ -573,7 +573,7 @@ class Tester():
     # Appends the cropped letters to an array
     # Source: https://stackoverflow.com/questions/64096953/how-to-convert-yolo-format-bounding-box-coordinates-into-opencv-format
     # Date: 11.05.2022
-    def yoloToCrop(self, original_image):
+    def yolo_to_crop(self, original_image):
         # Grayscales image
         gray = cv2.cvtColor(original_image, cv2.COLOR_BGR2GRAY)
 
@@ -624,7 +624,7 @@ class Tester():
     # checks if two images overlap each other
     # Source: https://www.baeldung.com/java-check-if-two-rectangles-overlap
     # Date: 11.05.2022
-    def isOverlapping(self, first_image, second_image):
+    def is_overlapping(self, first_image, second_image):
         if first_image.y > second_image.h or first_image.h < second_image.y:
             return False
         if first_image.w < second_image.x or first_image.x > second_image.w:
@@ -653,7 +653,7 @@ class Tester():
             for auto in segmented_letters:
 
                 # checks if the letters are overlapping
-                if self.isOverlapping(ground, auto):
+                if self.is_overlapping(ground, auto):
                     # Source: https://medium.com/analytics-vidhya/iou-intersection-over-union-705a39e7acef
                     # Date: 11.05.2022
                     x_inter1 = max(ground.x, auto.x)
