@@ -61,7 +61,7 @@ IMPORTANT: For the adaptive_histogram.py file the image should be rgb or gray-sc
 Our image segmentation work has been divided into 5 folders:
 - Binarization_comparison: this file was used to test different binarization methods. 
 - custom_traineddata_file: contains our custom traineddata file
-- pytesseract_image_to_boxes_comparison: contains a file that was used to test how different binarization methods affect pytesseracts segmentation.
+- pytesseract_image_to_boxes_comparison: contains a file that was used to test how different binarization methods affect pytesseract's segmentation.
 - segmentation_to_classifier: contains files needed to run our image segmentation.
 - yolo_to_img: a file we created to manually convert letters extracted from LabelImg in the YOLO format to images.
 
