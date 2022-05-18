@@ -59,7 +59,7 @@ IMPORTANT: For the adaptive_histogram.py file the image should be rgb or gray-sc
 
 ### Image Segmentation Files Structure
 Our image segmentation work has been divided into 5 folders:
-- Binarization_comparison: this file was used to test different binarization methods. 
+- binarization_comparison: this file was used to test different binarization methods. 
 - custom_traineddata_file: contains our custom traineddata file
 - pytesseract_image_to_boxes_comparison: contains a file that was used to test how different binarization methods affect pytesseract's segmentation.
 - segmentation_to_classifier: contains files needed to run our image segmentation.
