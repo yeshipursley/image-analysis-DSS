@@ -164,12 +164,11 @@ def word_cropper(seg_points, amount_vert_pixels, word, min_letter_width):
             if final_extend_image_left < 0:
                 final_extend_image_left = 0
 
-            # Checks if the letter is thinner than the min_letter_width
-            if len(amount_vert_pixels) - final_extend_image_left < min_letter_width:
-                print("Letter is too thin. " + str(len(amount_vert_pixels) - final_extend_image_left))
-            else:
-                cropped_letter = Letter(cropped_image, final_extend_image_left, None, segmentation_index, None)
-                segmented_letters_in_word.append(cropped_letter)
+            if cropped_image is not None:            
+                # Checks if the letter is thinner than the min_letter_width
+                if len(amount_vert_pixels) - final_extend_image_left >= min_letter_width:
+                    cropped_letter = Letter(cropped_image, final_extend_image_left, None, segmentation_index, None)
+                    segmented_letters_in_word.append(cropped_letter)
 
         # if the segmentation point is on the left side of the image
         elif i < 4:
@@ -203,14 +202,13 @@ def word_cropper(seg_points, amount_vert_pixels, word, min_letter_width):
                         extend_image += 2
 
             final_extend_image_right = segmentation_index + best_extend_image
-            _, width_cropped_image = cropped_image.shape
-
-            # Checks if the letter is thinner than the min_letter_width
-            if width_cropped_image < min_letter_width:
-                print("Letter is too thin. " + str(width_cropped_image))
-            else:
-                cropped_letter = Letter(cropped_image, i, None, final_extend_image_right, None)
-                segmented_letters_in_word.append(cropped_letter)
+            if cropped_image is not None:
+                _, width_cropped_image = cropped_image.shape
+    
+                # Checks if the letter is thinner than the min_letter_width
+                if width_cropped_image >= min_letter_width:
+                    cropped_letter = Letter(cropped_image, i, None, final_extend_image_right, None)
+                    segmented_letters_in_word.append(cropped_letter)
 
         # if the segmentation point is in the middle of the image
         else:
@@ -246,13 +244,12 @@ def word_cropper(seg_points, amount_vert_pixels, word, min_letter_width):
             final_extend_image_left = i - best_extend_image
             final_extend_image_right = segmentation_index + best_extend_image
 
-            _, width_cropped_image = cropped_image.shape
+            if cropped_image is not None:
+                _, width_cropped_image = cropped_image.shape
 
-            if width_cropped_image < min_letter_width:
-                print("Letter is too thin. " + str(width_cropped_image))
-            else:
-                cropped_letter = Letter(cropped_image, final_extend_image_left, None, final_extend_image_right, None)
-                segmented_letters_in_word.append(cropped_letter)
+                if width_cropped_image >= min_letter_width:
+                    cropped_letter = Letter(cropped_image, final_extend_image_left, None, final_extend_image_right, None)
+                    segmented_letters_in_word.append(cropped_letter)
 
         # Changes the index to the segmentation point
         segmentation_index = i
