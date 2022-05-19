@@ -108,4 +108,4 @@ python MachineLearning\NeuralNetwork\predict.py
 You will need to change the model_name variable at line 114 to the desired model located in the `MachineLearning/NeuralNetwork/models` folder 
 
 ### Test image
-To test our code we have added a test image called *test.png* in the repo. The image is a paragraph from The Great Isaiah Scroll column 35, gotten from: http://dss.collections.imj.org.il/isaiah 
+To test our code we have added a test image called *test.png* in the repo. The image is a paragraph from The Great Isaiah Scroll column 35, gotten from: https://archive.org/details/qumran 
