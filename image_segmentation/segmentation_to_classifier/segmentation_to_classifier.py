@@ -263,7 +263,7 @@ def word_splitter(word):
     image = image_straighten(word)
 
     # skeletonizes the image
-    skel = skeletonize(image)
+    skel = skeletonize(np.invert(image))
 
     # gets the height and width of the skeletonized image
     h_skel, w_skel = skel.shape
